@@ -76,19 +76,6 @@ class MoveValidatorTest {
     }
 
     @Test
-    void shouldRejectTwoSquarePawnMoveForNow() {
-        Board board = new Board();
-        board.setupInitialPosition();
-
-        Move move = new Move(
-                Position.fromAlgebraic("e2"),
-                Position.fromAlgebraic("e4")
-        );
-
-        assertFalse(validator.isValidPawnMove(board, move));
-    }
-
-    @Test
     void shouldRejectMoveWithoutPawn() {
         Board board = new Board();
 
@@ -99,4 +86,132 @@ class MoveValidatorTest {
 
         assertFalse(validator.isValidPawnMove(board, move));
     }
+
+
+    @Test
+    void shouldAllowWhitePawnTwoSquaresFromStartingRank() {
+        Board board = new Board();
+        board.setupInitialPosition();
+
+        Move move = new Move(
+                Position.fromAlgebraic("e2"),
+                Position.fromAlgebraic("e4")
+        );
+
+        assertTrue(validator.isValidPawnMove(board, move));
+    }
+
+    @Test
+    void shouldAllowBlackPawnTwoSquaresFromStartingRank() {
+        Board board = new Board();
+        board.setupInitialPosition();
+
+        Move move = new Move(
+                Position.fromAlgebraic("e7"),
+                Position.fromAlgebraic("e5")
+        );
+
+        assertTrue(validator.isValidPawnMove(board, move));
+    }
+
+    @Test
+    void shouldRejectBlockedTwoSquarePawnMove() {
+        Board board = new Board();
+
+        board.setPiece(
+                Position.fromAlgebraic("e2"),
+                new Piece(PieceType.PAWN, PieceColor.WHITE)
+        );
+
+        board.setPiece(
+                Position.fromAlgebraic("e3"),
+                new Piece(PieceType.KNIGHT, PieceColor.BLACK)
+        );
+
+        Move move = new Move(
+                Position.fromAlgebraic("e2"),
+                Position.fromAlgebraic("e4")
+        );
+
+        assertFalse(validator.isValidPawnMove(board, move));
+    }
+
+    @Test
+    void shouldRejectTwoSquareMoveOutsideStartingRank() {
+        Board board = new Board();
+
+        board.setPiece(
+                Position.fromAlgebraic("e3"),
+                new Piece(PieceType.PAWN, PieceColor.WHITE)
+        );
+
+        Move move = new Move(
+                Position.fromAlgebraic("e3"),
+                Position.fromAlgebraic("e5")
+        );
+
+        assertFalse(validator.isValidPawnMove(board, move));
+    }
+
+    @Test
+    void shouldAllowPawnDiagonalCapture() {
+        Board board = new Board();
+
+        board.setPiece(
+                Position.fromAlgebraic("e4"),
+                new Piece(PieceType.PAWN, PieceColor.WHITE)
+        );
+
+        board.setPiece(
+                Position.fromAlgebraic("d5"),
+                new Piece(PieceType.PAWN, PieceColor.BLACK)
+        );
+
+        Move move = new Move(
+                Position.fromAlgebraic("e4"),
+                Position.fromAlgebraic("d5")
+        );
+
+        assertTrue(validator.isValidPawnMove(board, move));
+    }
+
+    @Test
+    void shouldRejectDiagonalMoveToEmptySquare() {
+        Board board = new Board();
+
+        board.setPiece(
+                Position.fromAlgebraic("e4"),
+                new Piece(PieceType.PAWN, PieceColor.WHITE)
+        );
+
+        Move move = new Move(
+                Position.fromAlgebraic("e4"),
+                Position.fromAlgebraic("d5")
+        );
+
+        assertFalse(validator.isValidPawnMove(board, move));
+    }
+
+    @Test
+    void shouldRejectCapturingOwnPiece() {
+        Board board = new Board();
+
+        board.setPiece(
+                Position.fromAlgebraic("e4"),
+                new Piece(PieceType.PAWN, PieceColor.WHITE)
+        );
+
+        board.setPiece(
+                Position.fromAlgebraic("d5"),
+                new Piece(PieceType.KNIGHT, PieceColor.WHITE)
+        );
+
+        Move move = new Move(
+                Position.fromAlgebraic("e4"),
+                Position.fromAlgebraic("d5")
+        );
+
+        assertFalse(validator.isValidPawnMove(board, move));
+    }
+
 }
