@@ -37,13 +37,13 @@ class MoveValidatorTest {
         Board board = new Board();
 
         board.setPiece(
-                Position.fromAlgebraic("g1"),
-                new Piece(PieceType.KNIGHT, PieceColor.WHITE)
+                Position.fromAlgebraic("a1"),
+                new Piece(PieceType.ROOK, PieceColor.WHITE)
         );
 
         Move move = new Move(
-                Position.fromAlgebraic("g1"),
-                Position.fromAlgebraic("f3")
+                Position.fromAlgebraic("a1"),
+                Position.fromAlgebraic("a4")
         );
 
         assertFalse(validator.isValidMove(board, move));
