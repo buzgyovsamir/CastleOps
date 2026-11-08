@@ -1,10 +1,7 @@
 
 package com.castleops.chess.engine;
 
-import com.castleops.chess.engine.validator.BishopMoveValidator;
-import com.castleops.chess.engine.validator.KnightMoveValidator;
-import com.castleops.chess.engine.validator.PawnMoveValidator;
-import com.castleops.chess.engine.validator.PieceMoveValidator;
+import com.castleops.chess.engine.validator.*;
 import com.castleops.chess.model.*;
 
 import java.util.EnumMap;
@@ -21,6 +18,9 @@ public class MoveValidator {
         validators.put(PieceType.PAWN, new PawnMoveValidator());
         validators.put(PieceType.KNIGHT, new KnightMoveValidator());
         validators.put(PieceType.BISHOP, new BishopMoveValidator());
+        validators.put(PieceType.ROOK, new RookMoveValidator());
+        validators.put(PieceType.QUEEN, new QueenMoveValidator());
+        validators.put(PieceType.KING, new KingMoveValidator());
     }
 
     public boolean isValidMove(Board board, Move move) {

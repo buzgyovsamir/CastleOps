@@ -1,11 +1,15 @@
 
 package com.castleops.chess.engine.validator;
 
+import com.castleops.chess.engine.DestinationValidator;
 import com.castleops.chess.model.*;
 
 import java.util.Objects;
 
 public class KnightMoveValidator implements PieceMoveValidator {
+
+    private final DestinationValidator destinationValidator =
+            new DestinationValidator();
 
     @Override
     public boolean isValidMove(Board board, Move move) {
@@ -22,7 +26,7 @@ public class KnightMoveValidator implements PieceMoveValidator {
             return false;
         }
 
-        return isDestinationAvailable(board, move, piece);
+        return destinationValidator.isDestinationAvailable(board, move, piece);
     }
 
     private boolean isLShapedMove(Move move) {
@@ -38,10 +42,11 @@ public class KnightMoveValidator implements PieceMoveValidator {
                 || (fileDifference == 1 && rankDifference == 2);
     }
 
-    private boolean isDestinationAvailable(Board board, Move move, Piece piece) {
-        Piece targetPiece = board.getPiece(move.to());
-
-        return targetPiece == null
-                || targetPiece.color() != piece.color();
-    }
+//    exported logic in the MoveValidator class
+//    private boolean isDestinationAvailable(Board board, Move move, Piece piece) {
+//        Piece targetPiece = board.getPiece(move.to());
+//
+//        return targetPiece == null
+//                || targetPiece.color() != piece.color();
+//    }
 }

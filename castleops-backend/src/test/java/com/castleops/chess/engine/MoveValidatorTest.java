@@ -32,22 +32,23 @@ class MoveValidatorTest {
         assertFalse(validator.isValidMove(board, move));
     }
 
-    @Test
-    void shouldRejectMoveForUnsupportedPieceType() {
-        Board board = new Board();
-
-        board.setPiece(
-                Position.fromAlgebraic("a1"),
-                new Piece(PieceType.ROOK, PieceColor.WHITE)
-        );
-
-        Move move = new Move(
-                Position.fromAlgebraic("a1"),
-                Position.fromAlgebraic("a4")
-        );
-
-        assertFalse(validator.isValidMove(board, move));
-    }
+//    used for when the pieces logic wasn`t ready
+//    @Test
+//    void shouldRejectMoveForUnsupportedPieceType() {
+//        Board board = new Board();
+//
+//        board.setPiece(
+//                Position.fromAlgebraic("a1"),
+//                new Piece(PieceType.KING, PieceColor.WHITE)
+//        );
+//
+//        Move move = new Move(
+//                Position.fromAlgebraic("a1"),
+//                Position.fromAlgebraic("a4")
+//        );
+//
+//        assertFalse(validator.isValidMove(board, move));
+//    }
 
 
     @Test
