@@ -2,6 +2,7 @@
 package com.castleops.chess.engine.validator;
 
 import com.castleops.chess.engine.DestinationValidator;
+import com.castleops.chess.engine.MoveGeometry;
 import com.castleops.chess.engine.PathValidator;
 import com.castleops.chess.model.*;
 
@@ -24,30 +25,16 @@ public class QueenMoveValidator implements PieceMoveValidator {
             return false;
         }
 
-        return isStraightOrDiagonalMove(move)
+        boolean isStraight = MoveGeometry.isStraight(
+                move.from(), move.to()
+        );
+
+        boolean isDiagonal = MoveGeometry.isDiagonal(
+                move.from(), move.to()
+        );
+
+        return (isStraight || isDiagonal)
                 && pathValidator.isPathClear(board, move)
                 && destinationValidator.isDestinationAvailable(board, move, piece);
     }
-
-    private boolean isStraightOrDiagonalMove(Move move) {
-        int fileDifference = Math.abs(
-                move.to().file() - move.from().file()
-        );
-
-        int rankDifference = Math.abs(
-                move.to().rank() - move.from().rank()
-        );
-
-        boolean isStraight = fileDifference == 0 || rankDifference == 0;
-        boolean isDiagonal = fileDifference == rankDifference;
-
-        return isStraight || isDiagonal;
-    }
-//    exported logic in the MoveValidator class
-//    private boolean isDestinationAvailable(Board board, Move move, Piece piece) {
-//        Piece targetPiece = board.getPiece(move.to());
-//
-//        return targetPiece == null
-//                || targetPiece.color() != piece.color();
-//    }
 }

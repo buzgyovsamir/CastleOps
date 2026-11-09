@@ -1,6 +1,8 @@
 
 package com.castleops.chess.engine.validator;
 
+import com.castleops.chess.engine.DestinationValidator;
+import com.castleops.chess.engine.MoveGeometry;
 import com.castleops.chess.engine.PathValidator;
 import com.castleops.chess.model.*;
 
@@ -9,6 +11,8 @@ import java.util.Objects;
 public class BishopMoveValidator implements PieceMoveValidator {
 
     private final PathValidator pathValidator = new PathValidator();
+    private final DestinationValidator destinationValidator =
+            new DestinationValidator();
 
     @Override
     public boolean isValidMove(Board board, Move move) {
@@ -21,28 +25,8 @@ public class BishopMoveValidator implements PieceMoveValidator {
             return false;
         }
 
-        return isDiagonalMove(move)
-                && pathValidator.isPathClear(board,move)
-                && isDestinationAvailable(board, move, piece);
-    }
-
-    private boolean isDiagonalMove(Move move) {
-        int fileDifference = Math.abs(
-                move.to().file() - move.from().file()
-        );
-
-        int rankDifference = Math.abs(
-                move.to().rank() - move.from().rank()
-        );
-
-        return fileDifference == rankDifference;
-    }
-
-
-    private boolean isDestinationAvailable(Board board, Move move, Piece piece) {
-        Piece targetPiece = board.getPiece(move.to());
-
-        return targetPiece == null
-                || targetPiece.color() != piece.color();
+        return MoveGeometry.isDiagonal(move.from(), move.to())
+                && pathValidator.isPathClear(board, move)
+                && destinationValidator.isDestinationAvailable(board, move, piece);
     }
 }

@@ -1,3 +1,4 @@
+
 package com.castleops.chess.engine;
 
 import com.castleops.chess.model.Board;
@@ -12,31 +13,36 @@ public class PathValidator {
         Objects.requireNonNull(board, "Board cannot be null");
         Objects.requireNonNull(move, "Move cannot be null");
 
-        int fileDifference = move.to().file() - move.from().file();
-        int rankDifference = move.to().rank() - move.from().rank();
+        Position from = move.from();
+        Position to = move.to();
 
-        boolean isStraight = fileDifference == 0 || rankDifference == 0;
-        boolean isDiagonal = Math.abs(fileDifference) == Math.abs(rankDifference);
+        if (from.equals(to)) {
+            return false;
+        }
+
+        boolean isStraight = MoveGeometry.isStraight(from, to);
+        boolean isDiagonal = MoveGeometry.isDiagonal(from, to);
 
         if (!isStraight && !isDiagonal) {
             return false;
         }
 
         int fileDirection = Integer.compare(
-                move.to().file(), move.from().file()
+                to.file(), from.file()
         );
 
         int rankDirection = Integer.compare(
-                move.to().rank(), move.from().rank()
+                to.rank(), from.rank()
         );
 
-        int currentFile = move.from().file() + fileDirection;
-        int currentRank = move.from().rank() + rankDirection;
+        int currentFile = from.file() + fileDirection;
+        int currentRank = from.rank() + rankDirection;
 
-        while (currentFile != move.to().file()
-                || currentRank != move.to().rank()) {
+        while (currentFile != to.file()
+                || currentRank != to.rank()) {
 
-            Position currentPosition = new Position(currentFile, currentRank);
+            Position currentPosition =
+                    new Position(currentFile, currentRank);
 
             if (!board.isEmpty(currentPosition)) {
                 return false;

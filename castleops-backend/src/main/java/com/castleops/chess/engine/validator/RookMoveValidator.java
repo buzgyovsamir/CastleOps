@@ -2,6 +2,7 @@
 package com.castleops.chess.engine.validator;
 
 import com.castleops.chess.engine.DestinationValidator;
+import com.castleops.chess.engine.MoveGeometry;
 import com.castleops.chess.engine.PathValidator;
 import com.castleops.chess.model.*;
 
@@ -24,22 +25,8 @@ public class RookMoveValidator implements PieceMoveValidator {
             return false;
         }
 
-        return isStraightMove(move)
+        return MoveGeometry.isStraight(move.from(), move.to())
                 && pathValidator.isPathClear(board, move)
                 && destinationValidator.isDestinationAvailable(board, move, piece);
     }
-
-    private boolean isStraightMove(Move move) {
-        boolean sameFile = move.from().file() == move.to().file();
-        boolean sameRank = move.from().rank() == move.to().rank();
-
-        return sameFile || sameRank;
-    }
-//    exported logic in the MoveValidator class
-//    private boolean isDestinationAvailable(Board board, Move move, Piece piece) {
-//        Piece targetPiece = board.getPiece(move.to());
-//
-//        return targetPiece == null
-//                || targetPiece.color() != piece.color();
-//    }
 }
