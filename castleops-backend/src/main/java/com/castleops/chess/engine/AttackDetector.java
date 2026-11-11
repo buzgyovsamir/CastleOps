@@ -1,6 +1,7 @@
 
 package com.castleops.chess.engine;
 
+import com.castleops.chess.engine.validator.PathValidator;
 import com.castleops.chess.model.*;
 
 import java.util.Objects;

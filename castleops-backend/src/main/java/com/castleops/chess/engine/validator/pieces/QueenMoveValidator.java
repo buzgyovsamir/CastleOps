@@ -1,9 +1,9 @@
 
-package com.castleops.chess.engine.validator;
+package com.castleops.chess.engine.validator.pieces;
 
-import com.castleops.chess.engine.DestinationValidator;
 import com.castleops.chess.engine.MoveGeometry;
-import com.castleops.chess.engine.PathValidator;
+import com.castleops.chess.engine.validator.DestinationValidator;
+import com.castleops.chess.engine.validator.PathValidator;
 import com.castleops.chess.model.*;
 
 import java.util.Objects;

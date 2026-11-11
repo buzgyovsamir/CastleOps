@@ -1,14 +1,14 @@
 
-package com.castleops.chess.engine.validator;
+package com.castleops.chess.engine.validator.pieces;
 
-import com.castleops.chess.engine.DestinationValidator;
 import com.castleops.chess.engine.MoveGeometry;
-import com.castleops.chess.engine.PathValidator;
+import com.castleops.chess.engine.validator.DestinationValidator;
+import com.castleops.chess.engine.validator.PathValidator;
 import com.castleops.chess.model.*;
 
 import java.util.Objects;
 
-public class RookMoveValidator implements PieceMoveValidator {
+public class BishopMoveValidator implements PieceMoveValidator {
 
     private final PathValidator pathValidator = new PathValidator();
     private final DestinationValidator destinationValidator =
@@ -21,11 +21,11 @@ public class RookMoveValidator implements PieceMoveValidator {
 
         Piece piece = board.getPiece(move.from());
 
-        if (piece == null || piece.type() != PieceType.ROOK) {
+        if (piece == null || piece.type() != PieceType.BISHOP) {
             return false;
         }
 
-        return MoveGeometry.isStraight(move.from(), move.to())
+        return MoveGeometry.isDiagonal(move.from(), move.to())
                 && pathValidator.isPathClear(board, move)
                 && destinationValidator.isDestinationAvailable(board, move, piece);
     }

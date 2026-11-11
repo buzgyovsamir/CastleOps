@@ -1,7 +1,7 @@
 
-package com.castleops.chess.engine;
+package com.castleops.chess.engine.validator;
 
-import com.castleops.chess.engine.validator.*;
+import com.castleops.chess.engine.validator.pieces.*;
 import com.castleops.chess.model.*;
 
 import java.util.EnumMap;

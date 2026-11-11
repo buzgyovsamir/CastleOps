@@ -1,7 +1,7 @@
-
 package com.castleops.chess.game;
 
-import com.castleops.chess.engine.MoveValidator;
+import com.castleops.chess.engine.GameStatusEvaluator;
+import com.castleops.chess.engine.validator.LegalMoveValidator;
 import com.castleops.chess.model.*;
 
 import java.util.Objects;
@@ -9,11 +9,13 @@ import java.util.Objects;
 public class ChessGame {
 
     private final GameState gameState;
-    private final MoveValidator moveValidator;
+    private final LegalMoveValidator legalMoveValidator;
+    private final GameStatusEvaluator gameStatusEvaluator;
 
     public ChessGame() {
         this.gameState = new GameState();
-        this.moveValidator = new MoveValidator();
+        this.legalMoveValidator = new LegalMoveValidator();
+        this.gameStatusEvaluator = new GameStatusEvaluator();
     }
 
     public boolean makeMove(Move move) {
@@ -23,27 +25,29 @@ public class ChessGame {
             return false;
         }
 
+        if (!legalMoveValidator.isLegalMove(gameState, move)) {
+            return false;
+        }
+
+        executeMove(move);
+        gameState.switchTurn();
+
+        GameStatus status = gameStatusEvaluator.evaluate(gameState);
+        gameState.updateStatus(status);
+
+        return true;
+    }
+
+    private void executeMove(Move move) {
         Board board = gameState.getBoard();
         Piece movingPiece = board.getPiece(move.from());
 
-        if (movingPiece == null) {
-            return false;
-        }
+        Piece resultingPiece = move.isPromotion()
+                ? new Piece(move.promotionType(), movingPiece.color())
+                : movingPiece;
 
-        if (movingPiece.color() != gameState.getCurrentTurn()) {
-            return false;
-        }
-
-        Piece targetPiece = board.getPiece(move.to());
-
-        if (targetPiece != null
-                && targetPiece.type() == PieceType.KING) {
-            return false;
-        }
-
-        if (!moveValidator.isValidMove(board, move)) {
-            return false;
-        }
+        board.setPiece(move.from(), null);
+        board.setPiece(move.to(), resultingPiece);
 
         if (movingPiece.type() == PieceType.KING) {
             gameState.updateKingPosition(
@@ -51,13 +55,6 @@ public class ChessGame {
                     move.to()
             );
         }
-
-        board.setPiece(move.to(), movingPiece);
-        board.setPiece(move.from(), null);
-
-        gameState.switchTurn();
-
-        return true;
     }
 
     public Piece getPiece(Position position) {

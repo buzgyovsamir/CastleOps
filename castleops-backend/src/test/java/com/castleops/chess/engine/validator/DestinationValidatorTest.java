@@ -1,5 +1,5 @@
 
-package com.castleops.chess.engine;
+package com.castleops.chess.engine.validator;
 
 import com.castleops.chess.model.*;
 import org.junit.jupiter.api.Test;

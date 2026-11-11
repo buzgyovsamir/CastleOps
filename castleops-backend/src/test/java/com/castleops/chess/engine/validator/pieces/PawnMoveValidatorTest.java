@@ -1,6 +1,6 @@
-package com.castleops.chess.engine.validator;
+package com.castleops.chess.engine.validator.pieces;
 
-import com.castleops.chess.engine.MoveValidator;
+import com.castleops.chess.engine.validator.MoveValidator;
 import com.castleops.chess.model.*;
 import org.junit.jupiter.api.Test;
 

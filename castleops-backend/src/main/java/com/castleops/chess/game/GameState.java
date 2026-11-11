@@ -58,7 +58,15 @@ public class GameState {
         }
     }
 
+    void updateStatus(GameStatus status) {
+        this.status = Objects.requireNonNull(
+                status,
+                "Game status cannot be null"
+        );
+    }
+
     public void switchTurn() {
         currentTurn = currentTurn.opposite();
     }
+
 }
