@@ -1,9 +1,11 @@
 
 package com.castleops.chess.engine.validator.pieces;
 
+import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
 import org.junit.jupiter.api.Test;
 
+import static com.castleops.chess.support.GameStateFixtures.emptyGameState;
 import static org.junit.jupiter.api.Assertions.*;
 
 class KingMoveValidatorTest {
@@ -12,7 +14,8 @@ class KingMoveValidatorTest {
 
     @Test
     void shouldAllowVerticalMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -24,12 +27,13 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("e5")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowHorizontalMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -41,12 +45,13 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("f4")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowDiagonalMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -58,12 +63,13 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("f5")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectMovingTwoSquaresVertically() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -75,12 +81,13 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("e6")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectMovingTwoSquaresDiagonally() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -92,12 +99,13 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("g6")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowCapturingOpponentPiece() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -114,12 +122,13 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("f5")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectCapturingOwnPiece() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -136,24 +145,26 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("f5")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectMoveWithoutKingAtSource() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         Move move = new Move(
                 Position.fromAlgebraic("e4"),
                 Position.fromAlgebraic("e5")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowMoveInOppositeDirection() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e5"),
@@ -165,6 +176,6 @@ class KingMoveValidatorTest {
                 Position.fromAlgebraic("d4")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 }

@@ -1,9 +1,11 @@
 
 package com.castleops.chess.engine.validator;
 
+import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
 import org.junit.jupiter.api.Test;
 
+import static com.castleops.chess.support.GameStateFixtures.emptyGameState;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MoveValidatorTest {
@@ -12,7 +14,8 @@ class MoveValidatorTest {
 
     @Test
     void shouldRejectCapturingOwnPiece() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -29,7 +32,7 @@ class MoveValidatorTest {
                 Position.fromAlgebraic("d5")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
 //    used for when the pieces logic wasn`t ready
@@ -53,7 +56,8 @@ class MoveValidatorTest {
 
     @Test
     void shouldDelegateValidPawnMoveToPawnValidator() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
         board.setupInitialPosition();
 
         Move move = new Move(
@@ -61,7 +65,7 @@ class MoveValidatorTest {
                 Position.fromAlgebraic("e4")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
 

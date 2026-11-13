@@ -1,5 +1,6 @@
 package com.castleops.chess.game;
 
+import com.castleops.chess.engine.CaptureResolver;
 import com.castleops.chess.engine.GameStatusEvaluator;
 import com.castleops.chess.engine.validator.LegalMoveValidator;
 import com.castleops.chess.model.*;
@@ -11,6 +12,7 @@ public class ChessGame {
     private final GameState gameState;
     private final LegalMoveValidator legalMoveValidator;
     private final GameStatusEvaluator gameStatusEvaluator;
+    private final CaptureResolver captureResolver = new CaptureResolver();
 
     public ChessGame() {
         this.gameState = new GameState();
@@ -42,11 +44,15 @@ public class ChessGame {
         Board board = gameState.getBoard();
         Piece movingPiece = board.getPiece(move.from());
 
+        Position capturedPiecePosition =
+                captureResolver.resolveCapturePosition(board, move);
+
         Piece resultingPiece = move.isPromotion()
                 ? new Piece(move.promotionType(), movingPiece.color())
                 : movingPiece;
 
         board.setPiece(move.from(), null);
+        board.setPiece(capturedPiecePosition, null);
         board.setPiece(move.to(), resultingPiece);
 
         if (movingPiece.type() == PieceType.KING) {
@@ -55,6 +61,32 @@ public class ChessGame {
                     move.to()
             );
         }
+
+        updateEnPassantTarget(move, movingPiece);
+    }
+
+    private void updateEnPassantTarget(Move move, Piece movingPiece) {
+        int rankDistance = Math.abs(
+                move.to().rank() - move.from().rank()
+        );
+
+        boolean isDoublePawnMove =
+                movingPiece.type() == PieceType.PAWN && rankDistance == 2;
+
+        if (!isDoublePawnMove) {
+            gameState.updateEnPassantTarget(null);
+            return;
+        }
+
+        int intermediateRank =
+                (move.from().rank() + move.to().rank()) / 2;
+
+        Position target = new Position(
+                move.from().file(),
+                intermediateRank
+        );
+
+        gameState.updateEnPassantTarget(target);
     }
 
     public Piece getPiece(Position position) {

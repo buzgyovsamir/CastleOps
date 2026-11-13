@@ -1,5 +1,6 @@
 package com.castleops.chess.engine.validator;
 
+import com.castleops.chess.engine.CaptureResolver;
 import com.castleops.chess.engine.CheckDetector;
 import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
@@ -12,6 +13,7 @@ public class LegalMoveValidator {
     private final CheckDetector checkDetector = new CheckDetector();
     private final PromotionValidator promotionValidator =
             new PromotionValidator();
+    private final CaptureResolver captureResolver = new CaptureResolver();
 
     public boolean isLegalMove(GameState gameState, Move move) {
         Objects.requireNonNull(gameState, "Game state cannot be null");
@@ -37,7 +39,7 @@ public class LegalMoveValidator {
             return false;
         }
 
-        if (!moveValidator.isValidMove(board, move)) {
+        if (!moveValidator.isValidMove(gameState, move)) {
             return false;
         }
 
@@ -45,27 +47,34 @@ public class LegalMoveValidator {
             return false;
         }
 
-        return keepsKingSafe(gameState, move, movingPiece, targetPiece);
+        return keepsKingSafe(gameState, move, movingPiece);
     }
 
     private boolean keepsKingSafe(
             GameState gameState,
             Move move,
-            Piece movingPiece,
-            Piece targetPiece) {
+            Piece movingPiece) {
 
         Board board = gameState.getBoard();
         PieceColor movingColor = movingPiece.color();
-        Position previousKingPosition = gameState.getKingPosition(movingColor);
 
-        boolean movesKing = movingPiece.type() == PieceType.KING;
+        Position previousKingPosition =
+                gameState.getKingPosition(movingColor);
+
+        Position capturedPiecePosition =
+                captureResolver.resolveCapturePosition(board, move);
+
+        Piece capturedPiece = board.getPiece(capturedPiecePosition);
 
         Piece resultingPiece = move.isPromotion()
                 ? new Piece(move.promotionType(), movingColor)
                 : movingPiece;
 
+        boolean movesKing = movingPiece.type() == PieceType.KING;
+
         try {
             board.setPiece(move.from(), null);
+            board.setPiece(capturedPiecePosition, null);
             board.setPiece(move.to(), resultingPiece);
 
             if (movesKing) {
@@ -74,8 +83,9 @@ public class LegalMoveValidator {
 
             return !checkDetector.isInCheck(gameState, movingColor);
         } finally {
+            board.setPiece(move.to(), null);
             board.setPiece(move.from(), movingPiece);
-            board.setPiece(move.to(), targetPiece);
+            board.setPiece(capturedPiecePosition, capturedPiece);
 
             if (movesKing) {
                 gameState.updateKingPosition(movingColor, previousKingPosition);

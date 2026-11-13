@@ -1,6 +1,6 @@
-
 package com.castleops.chess.engine.validator.pieces;
 
+import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
 
 import java.util.Objects;
@@ -8,42 +8,59 @@ import java.util.Objects;
 public class PawnMoveValidator implements PieceMoveValidator {
 
     @Override
-    public boolean isValidMove(Board board, Move move) {
-        Objects.requireNonNull(board, "Board cannot be null");
+    public boolean isValidMove(GameState gameState, Move move) {
+        Objects.requireNonNull(gameState, "Game state cannot be null");
         Objects.requireNonNull(move, "Move cannot be null");
 
-        Piece piece = board.getPiece(move.from());
+        Board board = gameState.getBoard();
+        Piece pawn = board.getPiece(move.from());
 
-        if (piece == null || piece.type() != PieceType.PAWN) {
+        if (pawn == null || pawn.type() != PieceType.PAWN) {
             return false;
         }
 
-        int direction = piece.color() == PieceColor.WHITE ? 1 : -1;
+        int direction = pawn.color() == PieceColor.WHITE ? 1 : -1;
 
         return isSingleStepForward(board, move, direction)
-                || isDoubleStepForward(board, move, piece, direction)
-                || isDiagonalCapture(board, move, piece, direction);
+                || isDoubleStepForward(board, move, pawn, direction)
+                || isDiagonalCapture(board, move, pawn, direction)
+                || isEnPassantCapture(gameState, move, pawn, direction);
     }
 
-    private boolean isSingleStepForward(Board board, Move move, int direction) {
-        int fileDifference = move.to().file() - move.from().file();
-        int rankDifference = move.to().rank() - move.from().rank();
+    private boolean isSingleStepForward(
+            Board board,
+            Move move,
+            int direction) {
 
-        return fileDifference == 0
-                && rankDifference == direction
+        boolean staysOnSameFile =
+                move.from().file() == move.to().file();
+
+        boolean advancesOneRank =
+                move.to().rank() - move.from().rank() == direction;
+
+        return staysOnSameFile
+                && advancesOneRank
                 && board.isEmpty(move.to());
     }
 
-    private boolean isDoubleStepForward(Board board, Move move,
-                                        Piece piece, int direction) {
+    private boolean isDoubleStepForward(
+            Board board,
+            Move move,
+            Piece pawn,
+            int direction) {
 
-        int startingRank = piece.color() == PieceColor.WHITE ? 1 : 6;
-        int fileDifference = move.to().file() - move.from().file();
-        int rankDifference = move.to().rank() - move.from().rank();
+        int startingRank = pawn.color() == PieceColor.WHITE ? 1 : 6;
 
-        if (move.from().rank() != startingRank
-                || fileDifference != 0
-                || rankDifference != 2 * direction) {
+        boolean startsOnInitialRank =
+                move.from().rank() == startingRank;
+
+        boolean staysOnSameFile =
+                move.from().file() == move.to().file();
+
+        boolean advancesTwoRanks =
+                move.to().rank() - move.from().rank() == 2 * direction;
+
+        if (!startsOnInitialRank || !staysOnSameFile || !advancesTwoRanks) {
             return false;
         }
 
@@ -56,20 +73,64 @@ public class PawnMoveValidator implements PieceMoveValidator {
                 && board.isEmpty(move.to());
     }
 
-    private boolean isDiagonalCapture(Board board, Move move,
-                                      Piece piece, int direction) {
+    private boolean isDiagonalCapture(
+            Board board,
+            Move move,
+            Piece pawn,
+            int direction) {
 
-        int fileDifference = move.to().file() - move.from().file();
-        int rankDifference = move.to().rank() - move.from().rank();
-
-        if (Math.abs(fileDifference) != 1
-                || rankDifference != direction) {
+        if (!isOneStepDiagonal(move, direction)) {
             return false;
         }
 
         Piece targetPiece = board.getPiece(move.to());
 
         return targetPiece != null
-                && targetPiece.color() != piece.color();
+                && targetPiece.color() != pawn.color();
+    }
+
+    private boolean isEnPassantCapture(
+            GameState gameState,
+            Move move,
+            Piece pawn,
+            int direction) {
+
+        Board board = gameState.getBoard();
+
+        boolean reachesEnPassantTarget =
+                move.to().equals(gameState.getEnPassantTarget());
+
+        if (!reachesEnPassantTarget || !board.isEmpty(move.to())) {
+            return false;
+        }
+
+        int requiredRank = pawn.color() == PieceColor.WHITE ? 4 : 3;
+
+        boolean startsOnCorrectRank = move.from().rank() == requiredRank;
+
+        if (!startsOnCorrectRank || !isOneStepDiagonal(move, direction)) {
+            return false;
+        }
+
+        Position capturedPawnPosition = new Position(
+                move.to().file(),
+                move.from().rank()
+        );
+
+        Piece capturedPiece = board.getPiece(capturedPawnPosition);
+
+        return capturedPiece != null
+                && capturedPiece.type() == PieceType.PAWN
+                && capturedPiece.color() != pawn.color();
+    }
+
+    private boolean isOneStepDiagonal(Move move, int direction) {
+        int fileDistance =
+                Math.abs(move.to().file() - move.from().file());
+
+        int rankDifference =
+                move.to().rank() - move.from().rank();
+
+        return fileDistance == 1 && rankDifference == direction;
     }
 }

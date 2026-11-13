@@ -1,9 +1,11 @@
 
 package com.castleops.chess.engine.validator.pieces;
 
+import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
 import org.junit.jupiter.api.Test;
 
+import static com.castleops.chess.support.GameStateFixtures.emptyGameState;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BishopMoveValidatorTest {
@@ -12,7 +14,8 @@ class BishopMoveValidatorTest {
 
     @Test
     void shouldAllowDiagonalMoveOnEmptyBoard() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("c1"),
@@ -24,12 +27,13 @@ class BishopMoveValidatorTest {
                 Position.fromAlgebraic("f4")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectHorizontalMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("c1"),
@@ -41,12 +45,13 @@ class BishopMoveValidatorTest {
                 Position.fromAlgebraic("f1")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectVerticalMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("c1"),
@@ -58,12 +63,13 @@ class BishopMoveValidatorTest {
                 Position.fromAlgebraic("c4")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectMoveWhenPathIsBlocked() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
         board.setupInitialPosition();
 
         Move move = new Move(
@@ -71,12 +77,13 @@ class BishopMoveValidatorTest {
                 Position.fromAlgebraic("f4")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowCapturingOpponentPiece() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("c1"),
@@ -93,12 +100,13 @@ class BishopMoveValidatorTest {
                 Position.fromAlgebraic("f4")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectCapturingOwnPiece() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("c1"),
@@ -115,24 +123,26 @@ class BishopMoveValidatorTest {
                 Position.fromAlgebraic("f4")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectMoveWithoutBishopAtSource() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         Move move = new Move(
                 Position.fromAlgebraic("c1"),
                 Position.fromAlgebraic("f4")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowDiagonalMoveInOppositeDirection() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("f4"),
@@ -144,6 +154,6 @@ class BishopMoveValidatorTest {
                 Position.fromAlgebraic("c1")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 }

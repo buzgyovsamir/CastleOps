@@ -1,7 +1,7 @@
-
 package com.castleops.chess.engine.validator;
 
 import com.castleops.chess.engine.validator.pieces.*;
+import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
 
 import java.util.EnumMap;
@@ -23,22 +23,16 @@ public class MoveValidator {
         validators.put(PieceType.KING, new KingMoveValidator());
     }
 
-    public boolean isValidMove(Board board, Move move) {
-        Objects.requireNonNull(board, "Board cannot be null");
+    public boolean isValidMove(GameState gameState, Move move) {
+        Objects.requireNonNull(gameState, "Game state cannot be null");
         Objects.requireNonNull(move, "Move cannot be null");
 
-        Piece piece = board.getPiece(move.from());
+        Piece piece = gameState.getBoard().getPiece(move.from());
 
         if (piece == null) {
             return false;
         }
 
-        PieceMoveValidator validator = validators.get(piece.type());
-
-        if (validator == null) {
-            return false;
-        }
-
-        return validator.isValidMove(board, move);
+        return validators.get(piece.type()).isValidMove(gameState, move);
     }
 }

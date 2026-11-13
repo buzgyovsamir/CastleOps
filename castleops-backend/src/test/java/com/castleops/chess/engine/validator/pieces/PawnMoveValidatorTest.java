@@ -1,18 +1,20 @@
 package com.castleops.chess.engine.validator.pieces;
 
-import com.castleops.chess.engine.validator.MoveValidator;
+import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
 import org.junit.jupiter.api.Test;
 
+import static com.castleops.chess.support.GameStateFixtures.emptyGameState;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PawnMoveValidatorTest {
-    private final MoveValidator validator = new MoveValidator();
+    private final PawnMoveValidator validator = new PawnMoveValidator();
 
     @Test
     void shouldAllowWhitePawnOneSquareForward() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
         board.setupInitialPosition();
 
         Move move = new Move(
@@ -20,12 +22,13 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("e3")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowBlackPawnOneSquareForward() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
         board.setupInitialPosition();
 
         Move move = new Move(
@@ -33,12 +36,13 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("e6")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectBackwardPawnMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -50,12 +54,13 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("e3")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectBlockedPawnMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e2"),
@@ -72,38 +77,39 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("e3")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectMoveWithoutPawn() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         Move move = new Move(
                 Position.fromAlgebraic("e2"),
                 Position.fromAlgebraic("e3")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
 
     @Test
     void shouldAllowWhitePawnTwoSquaresFromStartingRank() {
-        Board board = new Board();
-        board.setupInitialPosition();
+        GameState gameState = new GameState();
 
         Move move = new Move(
                 Position.fromAlgebraic("e2"),
                 Position.fromAlgebraic("e4")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowBlackPawnTwoSquaresFromStartingRank() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
         board.setupInitialPosition();
 
         Move move = new Move(
@@ -111,12 +117,13 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("e5")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectBlockedTwoSquarePawnMove() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e2"),
@@ -133,12 +140,13 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("e4")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectTwoSquareMoveOutsideStartingRank() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e3"),
@@ -150,12 +158,13 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("e5")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldAllowPawnDiagonalCapture() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -172,12 +181,13 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("d5")
         );
 
-        assertTrue(validator.isValidMove(board, move));
+        assertTrue(validator.isValidMove(gameState, move));
     }
 
     @Test
     void shouldRejectDiagonalMoveToEmptySquare() {
-        Board board = new Board();
+        GameState gameState = emptyGameState();
+        Board board = gameState.getBoard();
 
         board.setPiece(
                 Position.fromAlgebraic("e4"),
@@ -189,6 +199,6 @@ public class PawnMoveValidatorTest {
                 Position.fromAlgebraic("d5")
         );
 
-        assertFalse(validator.isValidMove(board, move));
+        assertFalse(validator.isValidMove(gameState, move));
     }
 }

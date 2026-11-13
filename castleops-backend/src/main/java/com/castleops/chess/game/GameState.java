@@ -16,6 +16,8 @@ public class GameState {
     private Position whiteKingPosition;
     private Position blackKingPosition;
 
+    private Position enPassantTarget;
+
     public GameState() {
         this.board = new Board();
         this.board.setupInitialPosition();
@@ -63,6 +65,14 @@ public class GameState {
                 status,
                 "Game status cannot be null"
         );
+    }
+
+    public Position getEnPassantTarget() {
+        return enPassantTarget;
+    }
+
+    public void updateEnPassantTarget(Position enPassantTarget) {
+        this.enPassantTarget = enPassantTarget;
     }
 
     public void switchTurn() {
