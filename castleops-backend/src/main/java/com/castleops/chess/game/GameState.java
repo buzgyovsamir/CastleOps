@@ -2,6 +2,7 @@
 package com.castleops.chess.game;
 
 import com.castleops.chess.model.Board;
+import com.castleops.chess.model.CastlingSide;
 import com.castleops.chess.model.PieceColor;
 import com.castleops.chess.model.Position;
 
@@ -17,6 +18,9 @@ public class GameState {
     private Position blackKingPosition;
 
     private Position enPassantTarget;
+    private CastlingRights castlingRights = CastlingRights.initial();
+
+    private int halfmoveClock;
 
     public GameState() {
         this.board = new Board();
@@ -73,6 +77,47 @@ public class GameState {
 
     public void updateEnPassantTarget(Position enPassantTarget) {
         this.enPassantTarget = enPassantTarget;
+    }
+
+    public CastlingRights getCastlingRights() {
+        return castlingRights;
+    }
+
+    void revokeCastlingRights(PieceColor color) {
+        castlingRights = castlingRights.withoutBothSides(color);
+    }
+
+    void revokeCastlingRight(PieceColor color, CastlingSide side) {
+        castlingRights = castlingRights.without(color, side);
+    }
+
+    void restoreCastlingRights(CastlingRights previousRights) {
+        castlingRights = Objects.requireNonNull(
+                previousRights,
+                "Previous castling rights cannot be null"
+        );
+    }
+
+    public int getHalfmoveClock() {
+        return halfmoveClock;
+    }
+
+    void resetHalfmoveClock() {
+        halfmoveClock = 0;
+    }
+
+    void incrementHalfmoveClock() {
+        halfmoveClock++;
+    }
+
+    void restoreHalfmoveClock(int previousValue) {
+        if (previousValue < 0) {
+            throw new IllegalArgumentException(
+                    "Halfmove clock cannot be negative"
+            );
+        }
+
+        halfmoveClock = previousValue;
     }
 
     public void switchTurn() {

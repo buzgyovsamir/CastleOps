@@ -14,23 +14,30 @@ public class GameStatusEvaluator {
     private final CheckDetector checkDetector =
             new CheckDetector();
 
+    private final MoveCountDrawRule moveCountDrawRule =
+            new MoveCountDrawRule();
+
     public GameStatus evaluate(GameState gameState) {
         Objects.requireNonNull(gameState, "Game state cannot be null");
 
         boolean hasLegalMoves =
                 !legalMoveGenerator.generateLegalMoves(gameState).isEmpty();
 
-        if (hasLegalMoves) {
-            return GameStatus.ACTIVE;
+        if (!hasLegalMoves) {
+            boolean isInCheck = checkDetector.isInCheck(
+                    gameState,
+                    gameState.getCurrentTurn()
+            );
+
+            return isInCheck
+                    ? GameStatus.CHECKMATE
+                    : GameStatus.STALEMATE;
         }
 
-        boolean isInCheck = checkDetector.isInCheck(
-                gameState,
-                gameState.getCurrentTurn()
-        );
+        if (moveCountDrawRule.hasReachedAutomaticDrawThreshold(gameState)) {
+            return GameStatus.DRAW;
+        }
 
-        return isInCheck
-                ? GameStatus.CHECKMATE
-                : GameStatus.STALEMATE;
+        return GameStatus.ACTIVE;
     }
 }

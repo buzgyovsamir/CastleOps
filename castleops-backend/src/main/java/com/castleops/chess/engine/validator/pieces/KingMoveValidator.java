@@ -1,6 +1,6 @@
-
 package com.castleops.chess.engine.validator.pieces;
 
+import com.castleops.chess.engine.validator.CastlingValidator;
 import com.castleops.chess.engine.validator.DestinationValidator;
 import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
@@ -12,38 +12,37 @@ public class KingMoveValidator implements PieceMoveValidator {
     private final DestinationValidator destinationValidator =
             new DestinationValidator();
 
+    private final CastlingValidator castlingValidator =
+            new CastlingValidator();
+
     @Override
     public boolean isValidMove(GameState gameState, Move move) {
         Objects.requireNonNull(gameState, "Game state cannot be null");
         Objects.requireNonNull(move, "Move cannot be null");
 
         Board board = gameState.getBoard();
-        Piece piece = board.getPiece(move.from());
+        Piece king = board.getPiece(move.from());
 
-        if (piece == null || piece.type() != PieceType.KING) {
+        if (king == null || king.type() != PieceType.KING) {
             return false;
         }
 
-        return isSingleStepMove(move)
-                && destinationValidator.isDestinationAvailable(board, move, piece);
+        if (isSingleStepMove(move)) {
+            return destinationValidator.isDestinationAvailable(
+                    board, move, king
+            );
+        }
+
+        return castlingValidator.isValidCastling(gameState, move);
     }
 
     private boolean isSingleStepMove(Move move) {
-        int fileDifference = Math.abs(
-                move.to().file() - move.from().file()
-        );
+        int fileDistance =
+                Math.abs(move.to().file() - move.from().file());
 
-        int rankDifference = Math.abs(
-                move.to().rank() - move.from().rank()
-        );
+        int rankDistance =
+                Math.abs(move.to().rank() - move.from().rank());
 
-        return fileDifference <= 1 && rankDifference <= 1;
+        return fileDistance <= 1 && rankDistance <= 1;
     }
-//    exported logic in the MoveValidator class
-//    private boolean isDestinationAvailable(Board board, Move move, Piece piece) {
-//        Piece targetPiece = board.getPiece(move.to());
-//
-//        return targetPiece == null
-//                || targetPiece.color() != piece.color();
-//    }
 }

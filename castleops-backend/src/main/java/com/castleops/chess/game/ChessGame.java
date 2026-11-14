@@ -1,7 +1,7 @@
 package com.castleops.chess.game;
 
-import com.castleops.chess.engine.CaptureResolver;
 import com.castleops.chess.engine.GameStatusEvaluator;
+import com.castleops.chess.engine.MoveCountDrawRule;
 import com.castleops.chess.engine.validator.LegalMoveValidator;
 import com.castleops.chess.model.*;
 
@@ -12,12 +12,25 @@ public class ChessGame {
     private final GameState gameState;
     private final LegalMoveValidator legalMoveValidator;
     private final GameStatusEvaluator gameStatusEvaluator;
-    private final CaptureResolver captureResolver = new CaptureResolver();
+    private final MoveExecutor moveExecutor = new MoveExecutor();
+    private final MoveCountDrawRule moveCountDrawRule =
+            new MoveCountDrawRule();
 
     public ChessGame() {
-        this.gameState = new GameState();
+        this(new GameState());
+    }
+
+    ChessGame(GameState initialState) {
+        this.gameState = Objects.requireNonNull(
+                initialState,
+                "Initial state cannot be null"
+        );
         this.legalMoveValidator = new LegalMoveValidator();
         this.gameStatusEvaluator = new GameStatusEvaluator();
+
+        this.gameState.updateStatus(
+                gameStatusEvaluator.evaluate(this.gameState)
+        );
     }
 
     public boolean makeMove(Move move) {
@@ -31,7 +44,7 @@ public class ChessGame {
             return false;
         }
 
-        executeMove(move);
+        moveExecutor.apply(gameState, move);
         gameState.switchTurn();
 
         GameStatus status = gameStatusEvaluator.evaluate(gameState);
@@ -40,53 +53,60 @@ public class ChessGame {
         return true;
     }
 
-    private void executeMove(Move move) {
-        Board board = gameState.getBoard();
-        Piece movingPiece = board.getPiece(move.from());
+    public boolean claimFiftyMoveDraw(PieceColor claimant) {
+        Objects.requireNonNull(claimant, "Claimant cannot be null");
 
-        Position capturedPiecePosition =
-                captureResolver.resolveCapturePosition(board, move);
-
-        Piece resultingPiece = move.isPromotion()
-                ? new Piece(move.promotionType(), movingPiece.color())
-                : movingPiece;
-
-        board.setPiece(move.from(), null);
-        board.setPiece(capturedPiecePosition, null);
-        board.setPiece(move.to(), resultingPiece);
-
-        if (movingPiece.type() == PieceType.KING) {
-            gameState.updateKingPosition(
-                    movingPiece.color(),
-                    move.to()
-            );
+        if (!canClaimDraw(claimant)) {
+            return false;
         }
 
-        updateEnPassantTarget(move, movingPiece);
+        if (!moveCountDrawRule.hasReachedClaimThreshold(gameState)) {
+            return false;
+        }
+
+        gameState.updateStatus(GameStatus.DRAW);
+        return true;
     }
 
-    private void updateEnPassantTarget(Move move, Piece movingPiece) {
-        int rankDistance = Math.abs(
-                move.to().rank() - move.from().rank()
-        );
+    public boolean claimFiftyMoveDraw(
+            PieceColor claimant,
+            Move intendedMove) {
 
-        boolean isDoublePawnMove =
-                movingPiece.type() == PieceType.PAWN && rankDistance == 2;
+        Objects.requireNonNull(claimant, "Claimant cannot be null");
+        Objects.requireNonNull(intendedMove, "Intended move cannot be null");
 
-        if (!isDoublePawnMove) {
-            gameState.updateEnPassantTarget(null);
-            return;
+        if (!canClaimDraw(claimant)) {
+            return false;
         }
 
-        int intermediateRank =
-                (move.from().rank() + move.to().rank()) / 2;
+        if (!legalMoveValidator.isLegalMove(gameState, intendedMove)) {
+            return false;
+        }
 
-        Position target = new Position(
-                move.from().file(),
-                intermediateRank
-        );
+        if (!wouldReachFiftyMoveThreshold(intendedMove)) {
+            return false;
+        }
 
-        gameState.updateEnPassantTarget(target);
+        gameState.updateStatus(GameStatus.DRAW);
+        return true;
+    }
+
+    private boolean canClaimDraw(PieceColor claimant) {
+        boolean gameIsActive = gameState.getStatus() == GameStatus.ACTIVE;
+        boolean claimantHasTurn = gameState.getCurrentTurn() == claimant;
+
+        return gameIsActive && claimantHasTurn;
+    }
+
+    private boolean wouldReachFiftyMoveThreshold(Move intendedMove) {
+        MoveExecutor.UndoState undoState =
+                moveExecutor.apply(gameState, intendedMove);
+
+        try {
+            return moveCountDrawRule.hasReachedClaimThreshold(gameState);
+        } finally {
+            moveExecutor.undo(gameState, undoState);
+        }
     }
 
     public Piece getPiece(Position position) {
