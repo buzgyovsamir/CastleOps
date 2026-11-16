@@ -31,7 +31,7 @@ class GameStateResultTest {
     @ParameterizedTest
     @EnumSource(
             value = GameEndReason.class,
-            names = "CHECKMATE",
+            names = {"CHECKMATE", "RESIGNATION"},
             mode = EnumSource.Mode.EXCLUDE
     )
     void shouldDeriveDrawStatusFromReason(GameEndReason reason) {
@@ -78,5 +78,31 @@ class GameStateResultTest {
 
         assertEquals(GameStatus.ACTIVE, state.getStatus());
         assertTrue(state.getResult().isEmpty());
+    }
+
+    @Test
+    void shouldCreateResignationResult() {
+        GameResult result = GameResult.resignation(PieceColor.BLACK);
+
+        assertEquals(GameEndReason.RESIGNATION, result.reason());
+        assertEquals(PieceColor.BLACK, result.winner());
+        assertEquals(GameStatus.RESIGNED, result.getStatus());
+        assertFalse(result.isDraw());
+    }
+
+    @Test
+    void shouldRejectResignationWithoutWinner() {
+        assertThrows(
+                NullPointerException.class,
+                () -> new GameResult(GameEndReason.RESIGNATION, null)
+        );
+    }
+
+    @Test
+    void shouldRejectResignationAsDrawReason() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> GameResult.draw(GameEndReason.RESIGNATION)
+        );
     }
 }

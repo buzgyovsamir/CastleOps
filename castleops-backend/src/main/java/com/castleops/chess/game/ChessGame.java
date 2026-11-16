@@ -1,9 +1,6 @@
 package com.castleops.chess.game;
 
-import com.castleops.chess.engine.GameStatusEvaluator;
-import com.castleops.chess.engine.MoveCountDrawRule;
-import com.castleops.chess.engine.PositionKeyFactory;
-import com.castleops.chess.engine.RepetitionDrawRule;
+import com.castleops.chess.engine.*;
 import com.castleops.chess.engine.generator.LegalMoveGenerator;
 import com.castleops.chess.engine.validator.LegalMoveValidator;
 import com.castleops.chess.model.*;
@@ -27,6 +24,8 @@ public class ChessGame {
     private final LegalMoveGenerator legalMoveGenerator =
             new LegalMoveGenerator();
     private PieceColor drawOfferBy;
+    private final InsufficientMaterialDetector insufficientMaterialDetector =
+            new InsufficientMaterialDetector();
 
 
     public ChessGame() {
@@ -332,6 +331,31 @@ public class ChessGame {
         return getLegalMoves().stream()
                 .filter(move -> move.from().equals(position))
                 .toList();
+    }
+
+    public boolean resign(PieceColor player) {
+        Objects.requireNonNull(player, "Player cannot be null");
+
+        if (gameState.getStatus() != GameStatus.ACTIVE) {
+            return false;
+        }
+
+        PieceColor opponent = player.opposite();
+
+        boolean opponentCannotMate =
+                insufficientMaterialDetector.hasInsufficientMaterial(
+                        gameState.getBoard(),
+                        opponent
+                );
+
+        GameResult result = opponentCannotMate
+                ? GameResult.draw(
+                GameEndReason.RESIGNATION_WITHOUT_MATING_MATERIAL
+        )
+                : GameResult.resignation(opponent);
+
+        finishGame(result);
+        return true;
     }
 
     public Piece getPiece(Position position) {

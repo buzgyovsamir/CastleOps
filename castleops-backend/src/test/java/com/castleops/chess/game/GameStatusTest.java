@@ -11,16 +11,18 @@ class GameStatusTest {
 
     @Test
     void shouldContainExpectedStatuses() {
-        Set<GameStatus> expectedStatuses = Set.of(
-                GameStatus.ACTIVE,
-                GameStatus.CHECKMATE,
-                GameStatus.STALEMATE,
-                GameStatus.DRAW
-        );
-
         Set<GameStatus> actualStatuses =
                 Set.of(GameStatus.values());
 
-        assertEquals(expectedStatuses, actualStatuses);
+        assertEquals(
+                Set.of(
+                        GameStatus.ACTIVE,
+                        GameStatus.CHECKMATE,
+                        GameStatus.STALEMATE,
+                        GameStatus.DRAW,
+                        GameStatus.RESIGNED
+                ),
+                Set.of(GameStatus.values())
+        );
     }
 }

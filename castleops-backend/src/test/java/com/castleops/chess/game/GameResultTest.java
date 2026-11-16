@@ -22,7 +22,7 @@ class GameResultTest {
     @ParameterizedTest
     @EnumSource(
             value = GameEndReason.class,
-            names = "CHECKMATE",
+            names = {"CHECKMATE", "RESIGNATION"},
             mode = EnumSource.Mode.EXCLUDE
     )
     void shouldCreateDrawWithoutWinner(GameEndReason reason) {
@@ -44,7 +44,7 @@ class GameResultTest {
     @ParameterizedTest
     @EnumSource(
             value = GameEndReason.class,
-            names = "CHECKMATE",
+            names = {"CHECKMATE", "RESIGNATION"},
             mode = EnumSource.Mode.EXCLUDE
     )
     void shouldRejectDrawWithWinner(GameEndReason reason) {

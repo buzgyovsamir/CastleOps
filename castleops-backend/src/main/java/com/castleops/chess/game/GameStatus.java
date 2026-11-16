@@ -4,5 +4,6 @@ public enum GameStatus {
     ACTIVE,
     CHECKMATE,
     STALEMATE,
-    DRAW
+    DRAW,
+    RESIGNED
 }

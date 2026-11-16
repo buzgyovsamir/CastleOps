@@ -10,12 +10,12 @@ public record GameResult(
 ) {
 
     public GameResult {
-        Objects.requireNonNull(reason, "Game end reason must not be null");
+        Objects.requireNonNull(reason, "Game end reason cannot be null");
 
-        if (reason == GameEndReason.CHECKMATE) {
+        if (requiresWinner(reason)) {
             Objects.requireNonNull(
                     winner,
-                    "Checkmate must have a winner"
+                    "A decisive result must have a winner"
             );
         } else if (winner != null) {
             throw new IllegalArgumentException(
@@ -28,12 +28,16 @@ public record GameResult(
         return new GameResult(GameEndReason.CHECKMATE, winner);
     }
 
-    public static GameResult draw(GameEndReason reason) {
-        Objects.requireNonNull(reason, "Game end reason must not be null");
+    public static GameResult resignation(PieceColor winner) {
+        return new GameResult(GameEndReason.RESIGNATION, winner);
+    }
 
-        if (reason == GameEndReason.CHECKMATE) {
+    public static GameResult draw(GameEndReason reason) {
+        Objects.requireNonNull(reason, "Game end reason cannot be null");
+
+        if (requiresWinner(reason)) {
             throw new IllegalArgumentException(
-                    "Checkmate cannot be used as a draw reason"
+                    "A decisive reason cannot be used for a draw"
             );
         }
 
@@ -47,8 +51,14 @@ public record GameResult(
     public GameStatus getStatus() {
         return switch (reason) {
             case CHECKMATE -> GameStatus.CHECKMATE;
+            case RESIGNATION -> GameStatus.RESIGNED;
             case STALEMATE -> GameStatus.STALEMATE;
             default -> GameStatus.DRAW;
         };
+    }
+
+    private static boolean requiresWinner(GameEndReason reason) {
+        return reason == GameEndReason.CHECKMATE
+                || reason == GameEndReason.RESIGNATION;
     }
 }
