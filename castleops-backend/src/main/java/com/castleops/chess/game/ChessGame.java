@@ -32,6 +32,10 @@ public class ChessGame {
         this(new GameState());
     }
 
+    /**
+     * Takes ownership without copying. The caller must not mutate initialState
+     * after construction. Intended for controlled setup; position history starts here.
+     */
     ChessGame(GameState initialState) {
         this.gameState = Objects.requireNonNull(
                 initialState,

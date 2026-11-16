@@ -1,6 +1,10 @@
 package com.castleops.chess.game;
 
 import com.castleops.chess.model.*;
+import com.castleops.chess.engine.InsufficientMaterialDetector;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -133,6 +137,45 @@ class ResignationTest {
 
         assertEquals(GameStatus.ACTIVE, game.getStatus());
         assertTrue(game.getResult().isEmpty());
+    }
+
+    @ParameterizedTest(name = "Bishop side {0}, opponent {1}, cannot mate: {2}")
+    @MethodSource("bishopMaterialCases")
+    void shouldHandleBishopExceptionsForBothColors(
+            PieceColor beneficiary, PieceType opponent, boolean cannotMate) {
+        GameState state = createKingsOnlyState();
+        place(state, "c1", PieceType.BISHOP, beneficiary);
+        // b3 has the opposite square color to c1. Neither rook nor queen
+        // on b3 checks either king on e1/e8. A pawn can also promote.
+        place(state, "b3", opponent, beneficiary.opposite());
+        ChessGame game = new ChessGame(state);
+        assertEquals(GameStatus.ACTIVE, game.getStatus());
+        assertTrue(game.resign(beneficiary.opposite()));
+        assertEquals(cannotMate
+                ? GameResult.draw(GameEndReason.RESIGNATION_WITHOUT_MATING_MATERIAL)
+                : GameResult.resignation(beneficiary), game.getResult().orElseThrow());
+    }
+
+    private static Stream<Arguments> bishopMaterialCases() {
+        return Stream.of(PieceColor.values()).flatMap(color -> Stream.of(
+                Arguments.of(color, PieceType.ROOK, true),
+                Arguments.of(color, PieceType.QUEEN, true),
+                Arguments.of(color, PieceType.BISHOP, false),
+                Arguments.of(color, PieceType.KNIGHT, false),
+                Arguments.of(color, PieceType.PAWN, false)
+        ));
+    }
+    @ParameterizedTest
+    @EnumSource(PieceColor.class)
+    void shouldRecognizeSameSquareColorBishopsForEitherBeneficiary(PieceColor beneficiary) {
+        GameState state = createKingsOnlyState();
+        place(state, "c1", PieceType.BISHOP, beneficiary);
+        place(state, "e3", PieceType.BISHOP, beneficiary.opposite());
+        assertTrue(new InsufficientMaterialDetector()
+                .hasInsufficientMaterial(state.getBoard(), beneficiary));
+        ChessGame game = new ChessGame(state);
+        assertEquals(GameResult.draw(GameEndReason.INSUFFICIENT_MATERIAL), game.getResult().orElseThrow());
+        assertFalse(game.resign(beneficiary.opposite()));
     }
 
     private GameState createKingsOnlyState() {

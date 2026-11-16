@@ -57,6 +57,7 @@ class MoveCountDrawRuleTest {
         state.restoreHalfmoveClock(150);
 
         assertEquals(GameStatus.DRAW, evaluator.evaluate(state));
+        assertEquals(GameResult.draw(GameEndReason.SEVENTY_FIVE_MOVE_RULE), evaluator.evaluateResult(state).orElseThrow());
 
         // Evaluator-ът връща резултат, без сам да променя състоянието.
         assertEquals(GameStatus.ACTIVE, state.getStatus());
@@ -100,6 +101,7 @@ class MoveCountDrawRuleTest {
         state.restoreHalfmoveClock(150);
 
         assertEquals(GameStatus.DRAW, evaluator.evaluate(state));
+        assertEquals(GameResult.draw(GameEndReason.SEVENTY_FIVE_MOVE_RULE), evaluator.evaluateResult(state).orElseThrow());
     }
 
     private GameState activePosition() {

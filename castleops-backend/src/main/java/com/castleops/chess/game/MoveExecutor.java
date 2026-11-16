@@ -5,6 +5,11 @@ import com.castleops.chess.model.*;
 
 import java.util.Objects;
 
+/**
+ * Internal mutation primitive for already validated moves on consistent states.
+ * Callers require exclusive access throughout validation, application and undo.
+ * Does not update turn, history, result or draw offers.
+ */
 public class MoveExecutor {
 
     private final CaptureResolver captureResolver = new CaptureResolver();
@@ -38,6 +43,10 @@ public class MoveExecutor {
         return new RookMove(rookFrom, rookTo, rook);
     }
 
+    /**
+     * Applies a move validated against this unchanged state. For temporary moves,
+     * callers must undo in finally. The token belongs to this application only.
+     */
     public UndoState apply(GameState state, Move move) {
         Objects.requireNonNull(state, "Game state cannot be null");
         Objects.requireNonNull(move, "Move cannot be null");
@@ -103,6 +112,10 @@ public class MoveExecutor {
         return undoState;
     }
 
+    /**
+     * Restores the same state in reverse application order. Do not reuse tokens.
+     * Any turn changes made by the caller must be restored separately.
+     */
     public void undo(GameState state, UndoState undoState) {
         Objects.requireNonNull(state, "Game state cannot be null");
         Objects.requireNonNull(undoState, "Undo state cannot be null");

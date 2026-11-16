@@ -1,6 +1,5 @@
 package com.castleops.chess.engine.validator.pieces;
 
-import com.castleops.chess.engine.validator.EnPassantValidator;
 import com.castleops.chess.game.GameState;
 import com.castleops.chess.model.*;
 import org.junit.jupiter.api.BeforeEach;

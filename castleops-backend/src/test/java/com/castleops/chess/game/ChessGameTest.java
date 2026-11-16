@@ -106,6 +106,8 @@ class ChessGameTest {
 
     @Test
     void shouldRejectKingMovingIntoAttackAndRestoreKingPosition() {
+        GameState state = new GameState();
+        game = new ChessGame(state);
         assertTrue(game.makeMove(createMove("f2", "f3")));
         assertTrue(game.makeMove(createMove("e7", "e5")));
         assertTrue(game.makeMove(createMove("a2", "a3")));
@@ -115,7 +117,7 @@ class ChessGameTest {
         assertEquals(new Piece(PieceType.KING, PieceColor.WHITE),
                 game.getPiece(Position.fromAlgebraic("e1")));
         assertNull(game.getPiece(Position.fromAlgebraic("f2")));
-        // This block only works if the tracked king position was restored to e1.
+        assertEquals(Position.fromAlgebraic("e1"), state.getKingPosition(PieceColor.WHITE));
         assertTrue(game.makeMove(createMove("g2", "g3")));
     }
 

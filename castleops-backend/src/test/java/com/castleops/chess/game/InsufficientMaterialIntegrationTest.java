@@ -23,6 +23,7 @@ class InsufficientMaterialIntegrationTest {
         assertTrue(game.makeMove(move("e1", "e2")));
 
         assertEquals(GameStatus.DRAW, game.getStatus());
+        assertEquals(GameResult.draw(GameEndReason.INSUFFICIENT_MATERIAL), game.getResult().orElseThrow());
         assertEquals(
                 new Piece(PieceType.KING, PieceColor.WHITE),
                 game.getPiece(position("e2"))
@@ -36,6 +37,7 @@ class InsufficientMaterialIntegrationTest {
         ChessGame game = new ChessGame(createKingsOnlyState());
 
         assertEquals(GameStatus.DRAW, game.getStatus());
+        assertEquals(GameResult.draw(GameEndReason.INSUFFICIENT_MATERIAL), game.getResult().orElseThrow());
         assertFalse(game.makeMove(move("e1", "e2")));
     }
 
@@ -63,6 +65,7 @@ class InsufficientMaterialIntegrationTest {
         assertTrue(game.makeMove(move("c1", "d2")));
 
         assertEquals(GameStatus.DRAW, game.getStatus());
+        assertEquals(GameResult.draw(GameEndReason.INSUFFICIENT_MATERIAL), game.getResult().orElseThrow());
         assertEquals(
                 new Piece(PieceType.BISHOP, PieceColor.WHITE),
                 game.getPiece(position("d2"))

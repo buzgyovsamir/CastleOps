@@ -9,6 +9,11 @@ import com.castleops.chess.model.Position;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Mutable internal state owned by one ChessGame. Board access is not a snapshot.
+ * Direct setup edits must keep king positions and position metadata consistent.
+ * Consumers should use ChessGame rather than retain mutable state aliases.
+ */
 public class GameState {
 
     private final Board board;
