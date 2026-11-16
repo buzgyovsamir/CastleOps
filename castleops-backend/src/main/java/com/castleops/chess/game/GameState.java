@@ -7,12 +7,13 @@ import com.castleops.chess.model.PieceColor;
 import com.castleops.chess.model.Position;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class GameState {
 
     private final Board board;
     private PieceColor currentTurn;
-    private GameStatus status;
+    private GameResult result;
 
     private Position whiteKingPosition;
     private Position blackKingPosition;
@@ -27,7 +28,6 @@ public class GameState {
         this.board.setupInitialPosition();
 
         this.currentTurn = PieceColor.WHITE;
-        this.status = GameStatus.ACTIVE;
 
         this.whiteKingPosition = Position.fromAlgebraic("e1");
         this.blackKingPosition = Position.fromAlgebraic("e8");
@@ -42,7 +42,9 @@ public class GameState {
     }
 
     public GameStatus getStatus() {
-        return status;
+        return result == null
+                ? GameStatus.ACTIVE
+                : result.getStatus();
     }
 
     public Position getKingPosition(PieceColor color) {
@@ -64,11 +66,18 @@ public class GameState {
         }
     }
 
-    void updateStatus(GameStatus status) {
-        this.status = Objects.requireNonNull(
-                status,
-                "Game status cannot be null"
-        );
+    public Optional<GameResult> getResult() {
+        return Optional.ofNullable(result);
+    }
+
+    void finish(GameResult result) {
+        Objects.requireNonNull(result, "Game result cannot be null");
+
+        if (this.result != null) {
+            throw new IllegalStateException("Game has already finished");
+        }
+
+        this.result = result;
     }
 
     public Position getEnPassantTarget() {

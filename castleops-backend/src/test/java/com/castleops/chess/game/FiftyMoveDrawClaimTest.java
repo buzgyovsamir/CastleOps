@@ -19,6 +19,10 @@ class FiftyMoveDrawClaimTest {
         assertEquals(100, state.getHalfmoveClock());
 
         assertFalse(game.makeMove(move("a2", "a3")));
+        assertEquals(
+                GameEndReason.FIFTY_MOVE_RULE,
+                game.getResult().orElseThrow().reason()
+        );
     }
 
     @Test
@@ -64,6 +68,10 @@ class FiftyMoveDrawClaimTest {
         assertNull(game.getPiece(position("a3")));
         assertEquals(99, state.getHalfmoveClock());
         assertEquals(PieceColor.WHITE, game.getCurrentTurn());
+        assertEquals(
+                GameEndReason.FIFTY_MOVE_RULE,
+                game.getResult().orElseThrow().reason()
+        );
     }
 
     @Test
@@ -164,6 +172,10 @@ class FiftyMoveDrawClaimTest {
         ));
 
         assertEquals(GameStatus.DRAW, game.getStatus());
+        assertEquals(
+                GameEndReason.FIFTY_MOVE_RULE,
+                game.getResult().orElseThrow().reason()
+        );
     }
 
     private GameState positionWithClock(int halfmoveClock) {

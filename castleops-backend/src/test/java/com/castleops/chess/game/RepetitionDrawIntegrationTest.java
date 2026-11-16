@@ -40,6 +40,10 @@ class RepetitionDrawIntegrationTest {
         }
 
         assertEquals(GameStatus.DRAW, game.getStatus());
+        assertEquals(
+                GameEndReason.FIVEFOLD_REPETITION,
+                game.getResult().orElseThrow().reason()
+        );
     }
 
     @Test
@@ -51,6 +55,10 @@ class RepetitionDrawIntegrationTest {
         }
 
         assertFalse(game.makeMove(move("e2", "e4")));
+        assertEquals(
+                GameEndReason.FIVEFOLD_REPETITION,
+                game.getResult().orElseThrow().reason()
+        );
     }
 
     @Test
@@ -70,6 +78,11 @@ class RepetitionDrawIntegrationTest {
         repeatKnightCycle(game);
 
         assertEquals(GameStatus.DRAW, game.getStatus());
+
+        assertEquals(
+                GameEndReason.FIVEFOLD_REPETITION,
+                game.getResult().orElseThrow().reason()
+        );
     }
 
     private void repeatKnightCycle(ChessGame game) {

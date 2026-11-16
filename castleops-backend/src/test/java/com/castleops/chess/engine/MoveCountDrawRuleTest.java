@@ -40,6 +40,7 @@ class MoveCountDrawRuleTest {
                 expectedAutomaticThreshold,
                 rule.hasReachedAutomaticDrawThreshold(state)
         );
+
     }
 
     @Test

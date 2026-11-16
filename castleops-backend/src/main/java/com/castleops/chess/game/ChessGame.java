@@ -4,10 +4,13 @@ import com.castleops.chess.engine.GameStatusEvaluator;
 import com.castleops.chess.engine.MoveCountDrawRule;
 import com.castleops.chess.engine.PositionKeyFactory;
 import com.castleops.chess.engine.RepetitionDrawRule;
+import com.castleops.chess.engine.generator.LegalMoveGenerator;
 import com.castleops.chess.engine.validator.LegalMoveValidator;
 import com.castleops.chess.model.*;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class ChessGame {
 
@@ -21,6 +24,10 @@ public class ChessGame {
     private final PositionKeyFactory positionKeyFactory = new PositionKeyFactory();
     private final RepetitionDrawRule repetitionDrawRule =
             new RepetitionDrawRule();
+    private final LegalMoveGenerator legalMoveGenerator =
+            new LegalMoveGenerator();
+    private PieceColor drawOfferBy;
+
 
     public ChessGame() {
         this(new GameState());
@@ -31,13 +38,18 @@ public class ChessGame {
                 initialState,
                 "Initial state cannot be null"
         );
-        positionHistory.recordPosition(positionKeyFactory.create(gameState));
+
         this.legalMoveValidator = new LegalMoveValidator();
         this.gameStatusEvaluator = new GameStatusEvaluator();
 
-        this.gameState.updateStatus(
-                gameStatusEvaluator.evaluate(this.gameState)
+        positionHistory.recordPosition(
+                positionKeyFactory.create(gameState)
         );
+
+        if (gameState.getStatus() == GameStatus.ACTIVE) {
+            gameStatusEvaluator.evaluateResult(gameState)
+                    .ifPresent(this::finishGame);
+        }
     }
 
     public boolean makeMove(Move move) {
@@ -52,6 +64,15 @@ public class ChessGame {
         }
 
         moveExecutor.apply(gameState, move);
+
+        boolean opponentDeclinedByMoving =
+                drawOfferBy != null
+                        && drawOfferBy != gameState.getCurrentTurn();
+
+        if (opponentDeclinedByMoving) {
+            drawOfferBy = null;
+        }
+
         gameState.switchTurn();
 
         PositionKey currentPosition = recordCurrentPosition();
@@ -71,7 +92,9 @@ public class ChessGame {
             return false;
         }
 
-        gameState.updateStatus(GameStatus.DRAW);
+        finishGame(
+                GameResult.draw(GameEndReason.FIFTY_MOVE_RULE)
+        );
         return true;
     }
 
@@ -94,7 +117,9 @@ public class ChessGame {
             return false;
         }
 
-        gameState.updateStatus(GameStatus.DRAW);
+        finishGame(
+                GameResult.draw(GameEndReason.FIFTY_MOVE_RULE)
+        );
         return true;
     }
 
@@ -131,17 +156,22 @@ public class ChessGame {
     }
 
     private void updateGameStatus(PositionKey currentPosition) {
-        GameStatus evaluatedStatus = gameStatusEvaluator.evaluate(gameState);
+        Optional<GameResult> evaluatedResult =
+                gameStatusEvaluator.evaluateResult(gameState);
 
-        if (evaluatedStatus == GameStatus.ACTIVE
-                && repetitionDrawRule.hasReachedAutomaticDrawThreshold(
+        if (evaluatedResult.isPresent()) {
+            finishGame(evaluatedResult.get());
+            return;
+        }
+
+        if (repetitionDrawRule.hasReachedAutomaticDrawThreshold(
                 positionHistory,
                 currentPosition
         )) {
-            evaluatedStatus = GameStatus.DRAW;
+            finishGame(
+                    GameResult.draw(GameEndReason.FIVEFOLD_REPETITION)
+            );
         }
-
-        gameState.updateStatus(evaluatedStatus);
     }
 
     public boolean claimThreefoldRepetitionDraw(PieceColor claimant) {
@@ -160,7 +190,9 @@ public class ChessGame {
             return false;
         }
 
-        gameState.updateStatus(GameStatus.DRAW);
+        finishGame(
+                GameResult.draw(GameEndReason.THREEFOLD_REPETITION)
+        );
         return true;
     }
 
@@ -183,7 +215,9 @@ public class ChessGame {
             return false;
         }
 
-        gameState.updateStatus(GameStatus.DRAW);
+        finishGame(
+                GameResult.draw(GameEndReason.THREEFOLD_REPETITION)
+        );
         return true;
     }
 
@@ -214,6 +248,92 @@ public class ChessGame {
         }
     }
 
+    public Optional<PieceColor> getDrawOfferBy() {
+        return Optional.ofNullable(drawOfferBy);
+    }
+
+    public boolean offerDraw(PieceColor player) {
+        Objects.requireNonNull(player, "Player cannot be null");
+
+        if (gameState.getStatus() != GameStatus.ACTIVE) {
+            return false;
+        }
+
+        if (gameState.getCurrentTurn() != player) {
+            return false;
+        }
+
+        if (drawOfferBy != null) {
+            return false;
+        }
+
+        drawOfferBy = player;
+        return true;
+    }
+
+    public boolean acceptDraw(PieceColor player) {
+        Objects.requireNonNull(player, "Player cannot be null");
+
+        if (!canRespondToDrawOffer(player)) {
+            return false;
+        }
+
+        finishGame(GameResult.draw(GameEndReason.DRAW_AGREEMENT));
+        return true;
+    }
+
+    public boolean declineDraw(PieceColor player) {
+        Objects.requireNonNull(player, "Player cannot be null");
+
+        if (!canRespondToDrawOffer(player)) {
+            return false;
+        }
+
+        drawOfferBy = null;
+        return true;
+    }
+
+    private boolean canRespondToDrawOffer(PieceColor player) {
+        boolean gameIsActive = gameState.getStatus() == GameStatus.ACTIVE;
+        boolean opponentHasOffered =
+                drawOfferBy != null && drawOfferBy != player;
+
+        return gameIsActive && opponentHasOffered;
+    }
+
+    private void finishGame(GameResult result) {
+        gameState.finish(result);
+        drawOfferBy = null;
+    }
+
+    public List<Move> getLegalMoves() {
+        if (gameState.getStatus() != GameStatus.ACTIVE) {
+            return List.of();
+        }
+
+        return List.copyOf(
+                legalMoveGenerator.generateLegalMoves(gameState)
+        );
+    }
+
+    public List<Move> getLegalMovesFrom(Position position) {
+        Objects.requireNonNull(position, "Position cannot be null");
+
+        Piece piece = gameState.getBoard().getPiece(position);
+
+        boolean belongsToCurrentPlayer =
+                piece != null
+                        && piece.color() == gameState.getCurrentTurn();
+
+        if (!belongsToCurrentPlayer) {
+            return List.of();
+        }
+
+        return getLegalMoves().stream()
+                .filter(move -> move.from().equals(position))
+                .toList();
+    }
+
     public Piece getPiece(Position position) {
         return gameState.getBoard().getPiece(position);
     }
@@ -225,4 +345,9 @@ public class ChessGame {
     public GameStatus getStatus() {
         return gameState.getStatus();
     }
+
+    public Optional<GameResult> getResult() {
+        return gameState.getResult();
+    }
+
 }

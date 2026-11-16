@@ -1,0 +1,12 @@
+package com.castleops.chess.game;
+
+public enum GameEndReason {
+    CHECKMATE,
+    STALEMATE,
+    INSUFFICIENT_MATERIAL,
+    THREEFOLD_REPETITION,
+    FIVEFOLD_REPETITION,
+    FIFTY_MOVE_RULE,
+    SEVENTY_FIVE_MOVE_RULE,
+    DRAW_AGREEMENT
+}
