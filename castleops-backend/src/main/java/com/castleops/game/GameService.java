@@ -1,12 +1,15 @@
 package com.castleops.game;
 
 import com.castleops.chess.model.Move;
+import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+
+@Service
 public final class GameService {
 
     private final ConcurrentMap<UUID, GameSession> sessions =
