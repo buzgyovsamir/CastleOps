@@ -56,3 +56,16 @@ tests cover the core. Initial-position perft through depth four verifies move
 counts and restoration, but does not exercise played castling, en passant captures
 or promotions. Dedicated tests cover these moves. The suite does not establish
 complete rule coverage or concurrent-use safety.
+
+## Test the api locally with Postman
+
+
+| Действие | Заявка | Очакван резултат |
+|---|---|---|
+| Създай партия като белите | `POST /api/games` | `201`, `gameId`, `WAITING_FOR_OPPONENT` |
+| Присъедини черните | `POST /api/games/{gameId}/join` | `200`, `IN_PROGRESS`, белите са на ход |
+| Изиграй `e2 → e4` | `POST /api/games/{gameId}/moves` | `200`, черните са на ход |
+| Опитай `d2 → d4` пак като белите | `POST /api/games/{gameId}/moves` | `409` |
+| Провери дъската след отказа | `GET /api/games/{gameId}` | Пешката остава на `d2`, черните още са на ход |
+| Изиграй `e7 → e5` като черните | `POST /api/games/{gameId}/moves` | `200`, белите са на ход |
+| Подай `e9` като начално поле | `POST /api/games/{gameId}/moves` | `400` |
