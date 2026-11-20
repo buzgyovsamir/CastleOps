@@ -49,3 +49,23 @@ jobs:
             castleops-backend/target/failsafe-reports/
           if-no-files-found: ignore
           retention-days: 7
+
+    env:
+      CASTLEOPS_DB_URL: jdbc:postgresql://localhost:5432/castleops_test
+      CASTLEOPS_DB_USERNAME: castleops
+      CASTLEOPS_DB_PASSWORD: ci_test_only
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: castleops_test
+          POSTGRES_USER: castleops
+          POSTGRES_PASSWORD: ci_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U castleops -d castleops_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
