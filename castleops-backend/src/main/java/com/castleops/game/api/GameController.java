@@ -10,6 +10,7 @@ import com.castleops.game.api.dto.JoinGameRequest;
 import com.castleops.game.api.dto.MakeMoveRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -20,9 +21,14 @@ import java.util.UUID;
 public class GameController {
 
     private final GameService gameService;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public GameController(GameService gameService) {
+    public GameController(
+            GameService gameService,
+            SimpMessagingTemplate messagingTemplate
+    ) {
         this.gameService = gameService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @PostMapping
@@ -56,7 +62,7 @@ public class GameController {
                 request.playerId()
         );
 
-        return GameResponse.from(snapshot);
+        return publishGameUpdate(snapshot);
     }
 
     @PostMapping("/{gameId}/moves")
@@ -76,6 +82,15 @@ public class GameController {
                 move
         );
 
-        return GameResponse.from(snapshot);
+        return publishGameUpdate(snapshot);
+    }
+
+    private GameResponse publishGameUpdate(GameSnapshot snapshot) {
+        GameResponse response = GameResponse.from(snapshot);
+        String destination = "/topic/games/" + response.gameId();
+
+        messagingTemplate.convertAndSend(destination, response);
+
+        return response;
     }
 }
