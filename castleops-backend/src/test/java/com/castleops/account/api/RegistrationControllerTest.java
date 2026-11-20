@@ -14,11 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
 public class RegistrationControllerTest {
+    @Autowired
     RegistrationService registrationService;
+    @Autowired
     UserRepository userRepository;
     @Autowired
     private MockMvc mockMvc;
@@ -29,6 +33,7 @@ public class RegistrationControllerTest {
             """.formatted(username, password);
 
         return mockMvc.perform(post("/api/auth/register")
+                        .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }
