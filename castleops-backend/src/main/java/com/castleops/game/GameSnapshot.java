@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public record GameSnapshot(
         UUID gameId,
+        long version,
         UUID whitePlayerId,
         Optional<UUID> blackPlayerId,
         GameSessionStatus status,
@@ -23,6 +24,7 @@ public record GameSnapshot(
 
     public GameSnapshot {
         Objects.requireNonNull(gameId, "Game ID cannot be null");
+        Objects.requireNonNull(version, "Game Version cannot be null");
         Objects.requireNonNull(whitePlayerId, "White player ID cannot be null");
         Objects.requireNonNull(blackPlayerId, "Black player optional cannot be null");
         Objects.requireNonNull(status, "Status cannot be null");

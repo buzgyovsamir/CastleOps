@@ -18,6 +18,7 @@ public final class GameSession {
     private final UUID id;
     private final UUID whitePlayerId;
     private final ChessGame chessGame;
+    private long version = 0;
 
     private UUID blackPlayerId;
 
@@ -49,6 +50,7 @@ public final class GameSession {
         }
 
         blackPlayerId = playerId;
+        version++;
     }
 
     public synchronized boolean makeMove(UUID playerId, Move move) {
@@ -72,7 +74,13 @@ public final class GameSession {
             );
         }
 
-        return chessGame.makeMove(move);
+        boolean moveAccepted = chessGame.makeMove(move);
+
+        if (moveAccepted) {
+            version++;
+        }
+
+        return moveAccepted;
     }
 
     public synchronized GameSnapshot getSnapshot() {
@@ -91,6 +99,7 @@ public final class GameSession {
 
         return new GameSnapshot(
                 id,
+                version,
                 whitePlayerId,
                 Optional.ofNullable(blackPlayerId),
                 getStatus(),

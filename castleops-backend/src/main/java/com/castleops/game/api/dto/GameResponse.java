@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public record GameResponse(
         UUID gameId,
+        long version,
         UUID whitePlayerId,
         UUID blackPlayerId,
         GameSessionStatus status,
@@ -39,6 +40,7 @@ public record GameResponse(
 
         return new GameResponse(
                 snapshot.gameId(),
+                snapshot.version(),
                 snapshot.whitePlayerId(),
                 snapshot.blackPlayerId().orElse(null),
                 snapshot.status(),

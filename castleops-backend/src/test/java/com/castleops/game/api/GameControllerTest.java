@@ -49,6 +49,7 @@ class GameControllerTest {
 
         mvc.perform(get(gameUrl))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(2))
                 .andExpect(jsonPath("$.currentTurn").value("BLACK"))
                 .andExpect(jsonPath("$.pieces[?(@.square == 'd2')]").value(hasSize(1)))
                 .andExpect(jsonPath("$.pieces[?(@.square == 'd4')]").isEmpty());
@@ -58,7 +59,9 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.currentTurn").value("WHITE"))
                 .andExpect(jsonPath(
                         "$.pieces[?(@.square == 'e5' && @.color == 'BLACK' && @.type == 'PAWN')]"
-                ).value(hasSize(1)));
+                ).value(hasSize(1)))
+                .andExpect(jsonPath("$.version").value(3))
+        ;
     }
 
     @Test
@@ -95,6 +98,7 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.whitePlayerId").value(white.toString()))
                 .andExpect(jsonPath("$.status").value("WAITING_FOR_OPPONENT"))
                 .andExpect(jsonPath("$.pieces").value(hasSize(32)))
+                .andExpect(jsonPath("$.version").value(0))
                 .andReturn()
                 .getResponse();
 
@@ -108,7 +112,9 @@ class GameControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.blackPlayerId").value(black.toString()))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
-                .andExpect(jsonPath("$.currentTurn").value("WHITE"));
+                .andExpect(jsonPath("$.currentTurn").value("WHITE"))
+                .andExpect(jsonPath("$.version").value(1));
+
     }
 
     private ResultActions move(String gameUrl, UUID playerId, String from, String to)
