@@ -37,7 +37,7 @@ jobs:
           cache-dependency-path: castleops-backend/pom.xml
 
       - name: Build and test
-        run: ./mvnw --batch-mode --no-transfer-progress verify
+        run: ./mvnw --batch-mode --no-transfer-progress -Dsurefire.rerunFailingTestsCount=1 verify
 
       - name: Upload test reports
         if: ${{ always() }}

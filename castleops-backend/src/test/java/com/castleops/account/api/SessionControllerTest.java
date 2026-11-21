@@ -1,5 +1,6 @@
 package com.castleops.account.api;
 
+import com.castleops.account.RegisteredUser;
 import com.castleops.account.RegistrationService;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ public class SessionControllerTest {
     void shouldRecognizePlayerUntilLogout() throws Exception {
         String username = "SessionFlowTest";
         String password = "castleops session test";
-        registrationService.register(username, password);
+        RegisteredUser registered = registrationService.register(username, password);
 
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isUnauthorized());
@@ -58,6 +59,7 @@ public class SessionControllerTest {
 
         mockMvc.perform(get("/api/auth/me").session(session))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(registered.id().toString()))
                 .andExpect(jsonPath("$.username").value(username));
 
         mockMvc.perform(post("/api/auth/logout").session(session).with(csrf()))
