@@ -7,8 +7,6 @@ import jakarta.validation.constraints.Pattern;
 import java.util.UUID;
 
 public record MakeMoveRequest(
-        @NotNull UUID playerId,
-
         @NotNull
         @Pattern(regexp = "[a-h][1-8]")
         String from,

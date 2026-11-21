@@ -1,5 +1,6 @@
 package com.castleops.game.websocket;
 
+import com.castleops.account.RegistrationService;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,9 @@ import org.springframework.messaging.converter.SimpleMessageConverter;
 import java.nio.charset.StandardCharsets;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.*;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
@@ -24,7 +27,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,17 +41,27 @@ class GameWebSocketTest {
     private int port;
 
     @Autowired
-    private MockMvc mvc;
+    private MockMvc mockMvc;
 
     @Autowired
     private SimpMessagingTemplate broker;
 
+    @Autowired
+    RegistrationService registrationService;
+
     @Test
     void shouldBroadcastAcceptedUpdatesToBothSubscribers() throws Exception {
-        UUID white = UUID.randomUUID();
-        UUID black = UUID.randomUUID();
+        String password = "castleops websocket test";
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        var white = registrationService.register("WsWhite" + suffix, password);
+        var black = registrationService.register("WsBlack" + suffix, password);
 
-        String gameUrl = postJson("/api/games", playerBody(white))
+        MockHttpSession whiteSession = login(white.username(), password);
+        MockHttpSession blackSession = login(black.username(), password);
+
+        String gameUrl = mockMvc.perform(post("/api/games")
+                        .session(whiteSession)
+                        .with(csrf()))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getHeader(HttpHeaders.LOCATION);
         assertNotNull(gameUrl);
@@ -62,28 +77,53 @@ class GameWebSocketTest {
             var second = subscribe(client, topic);
             awaitSubscriptions(topic, first, second);
 
-            String joined = postJson(gameUrl + "/join", playerBody(black))
+            String joined = mockMvc.perform(post(gameUrl + "/join")
+                            .session(blackSession)
+                            .with(csrf()))
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
             assertUpdate(joined, 1, first, second);
 
-            String whiteMoved = postJson(gameUrl + "/moves", moveBody(white, "e2", "e4"))
+            String whiteMoved = move(gameUrl, whiteSession, "e2", "e4")
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
             assertUpdate(whiteMoved, 2, first, second);
 
-            postJson(gameUrl + "/moves", moveBody(white, "d2", "d4"))
+            move(gameUrl, whiteSession, "d2", "d4")
                     .andExpect(status().isConflict());
 
-            String blackMoved = postJson(gameUrl + "/moves", moveBody(black, "e7", "e5"))
+            String blackMoved = move(gameUrl, blackSession, "e7", "e5")
                     .andExpect(status().isOk())
                     .andReturn().getResponse().getContentAsString();
-
-            // The next update on each connection must be the accepted black move.
             assertUpdate(blackMoved, 3, first, second);
         } finally {
             client.stop();
         }
+    }
+
+    private ResultActions move(String gameUrl, MockHttpSession session,
+                               String from, String to) throws Exception {
+        return mockMvc.perform(post(gameUrl + "/moves")
+                .session(session)
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"from":"%s","to":"%s"}
+                    """.formatted(from, to)));
+    }
+
+    private MockHttpSession login(String username, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
+                        .param("username", username)
+                        .param("password", password))
+                .andExpect(status().isNoContent())
+                .andReturn();
+
+        MockHttpSession session =
+                (MockHttpSession) result.getRequest().getSession(false);
+        assertThat(session).isNotNull();
+        return session;
     }
 
     private BlockingQueue<String> subscribe(WebSocketStompClient client, String topic)
@@ -149,7 +189,7 @@ class GameWebSocketTest {
     }
 
     private ResultActions postJson(String url, String body) throws Exception {
-        return mvc.perform(post(url)
+        return mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
     }

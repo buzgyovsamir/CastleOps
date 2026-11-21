@@ -21,7 +21,7 @@ public class SecurityConfig {
         provider.setPasswordEncoder(passwordEncoder);
 
         http
-                .securityMatcher("/api/auth/**")
+                .securityMatcher("/api/auth/**", "/api/games", "/api/games/*/join", "/api/games/*/moves")
                 .authenticationProvider(provider)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
