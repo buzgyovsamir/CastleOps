@@ -162,6 +162,99 @@ class GameControllerTest {
         return gameUrl;
     }
 
+    @Test
+    void shouldAllowAnonymousSpectatorToReadGameButRejectGameCommands() throws Exception {
+        String password = "castleops spectator test";
+        var white = registrationService.register("PublicGameWhite", password);
+        var black = registrationService.register("PublicGameBlack", password);
+
+        MockHttpSession whiteSession = login(white.username(), password);
+        MockHttpSession blackSession = login(black.username(), password);
+
+        mockMvc.perform(post("/api/games").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        String gameUrl = createGame(whiteSession);
+        UUID gameId = UUID.fromString(gameUrl.substring("/api/games/".length()));
+
+        // Черното място още е свободно, когато анонимният зрител опитва да влезе.
+        mockMvc.perform(post(gameUrl + "/join").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post(gameUrl + "/join")
+                        .session(blackSession)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(1));
+
+        mockMvc.perform(post(gameUrl + "/moves")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"from":"e2","to":"e4"}
+                            """))
+                .andExpect(status().isUnauthorized());
+
+        // Същият ход е легален и белите все още могат да го изиграят.
+        move(gameId, whiteSession, "e2", "e4")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(2));
+
+        // GET без логната сесия връща актуалната дъска на зрителя.
+        mockMvc.perform(get(gameUrl))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameId").value(gameId.toString()))
+                .andExpect(jsonPath("$.version").value(2))
+                .andExpect(jsonPath("$.currentTurn").value("BLACK"))
+                .andExpect(jsonPath(
+                        "$.pieces[?(@.square == 'e4' && @.type == 'PAWN' && @.color == 'WHITE')]"
+                ).isNotEmpty());
+    }
+
+    @Test
+    void shouldAllowSignedInSpectatorToWatchButRejectMoveOnBehalfOfBlack() throws Exception {
+        String password = "castleops spectator test";
+        var white = registrationService.register("SpectatorGameWhite", password);
+        var black = registrationService.register("SpectatorGameBlack", password);
+        var spectator = registrationService.register("SpectatorGameViewer", password);
+
+        MockHttpSession whiteSession = login(white.username(), password);
+        MockHttpSession blackSession = login(black.username(), password);
+        MockHttpSession spectatorSession = login(spectator.username(), password);
+
+        String gameUrl = createGame(whiteSession);
+        UUID gameId = UUID.fromString(gameUrl.substring("/api/games/".length()));
+
+        mockMvc.perform(post(gameUrl + "/join")
+                        .session(blackSession)
+                        .with(csrf()))
+                .andExpect(status().isOk());
+
+        move(gameId, whiteSession, "e2", "e4")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(2))
+                .andExpect(jsonPath("$.currentTurn").value("BLACK"));
+
+        move(gameId, spectatorSession, "e7", "e5")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail")
+                        .value("The player is not a participant in this game"));
+
+        mockMvc.perform(get(gameUrl).session(spectatorSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(2))
+                .andExpect(jsonPath("$.currentTurn").value("BLACK"))
+                .andExpect(jsonPath(
+                        "$.pieces[?(@.square == 'e7' && @.type == 'PAWN' && @.color == 'BLACK')]"
+                ).isNotEmpty())
+                .andExpect(jsonPath("$.pieces[?(@.square == 'e5')]").isEmpty());
+
+        move(gameId, blackSession, "e7", "e5")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(3))
+                .andExpect(jsonPath("$.currentTurn").value("WHITE"));
+    }
+
     private void joinGame(String gameUrl, UUID black) throws Exception {
         postJson(gameUrl + "/join", playerBody(black))
                 .andExpect(status().isOk())
