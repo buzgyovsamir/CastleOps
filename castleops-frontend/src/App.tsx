@@ -1,4 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import CreateGame from './CreateGame'
+import JoinGame from './JoinGame'
+import GameView from './GameView'
 
 type CurrentUser = {
   id: string
@@ -91,6 +94,9 @@ export default function App() {
   const [logoutError, setLogoutError] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
   const [accountNotice, setAccountNotice] = useState('')
+  const [activeGameId, setActiveGameId] = useState<string | null>(() =>
+    new URLSearchParams(window.location.search).get('game')
+  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -160,6 +166,20 @@ export default function App() {
     }
   }
 
+function openGame(gameId: string) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('game', gameId)
+  window.history.replaceState(null, '', url)
+  setActiveGameId(gameId)
+}
+
+function returnToLobby() {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('game')
+  window.history.replaceState(null, '', url)
+  setActiveGameId(null)
+}
+
 async function handleLogout() {
   if (isSubmitting) return
 
@@ -180,6 +200,7 @@ async function handleLogout() {
     setUsername('')
     setPassword('')
     setFormError('')
+    returnToLobby()
     setSession({ status: 'guest' })
   } catch {
     setLogoutError('Unable to sign out. Please try again.')
@@ -260,7 +281,20 @@ async function handleLogout() {
       {session.status === 'authenticated' && (
         <>
           <p>Signed in as {session.user.username}.</p>
-
+          {activeGameId ? (
+            <GameView
+              key={activeGameId}
+              gameId={activeGameId}
+              userId={session.user.id}
+              onBack={returnToLobby}
+              getCsrfHeaders={getCsrfHeaders}
+            />
+          ) : (
+            <>
+              <CreateGame getCsrfHeaders={getCsrfHeaders} onOpenGame={openGame} />
+              <JoinGame getCsrfHeaders={getCsrfHeaders} onOpenGame={openGame} />
+            </>
+          )}
           <button type="button" onClick={handleLogout} disabled={isSubmitting}>
             {isSubmitting ? 'Signing out…' : 'Sign out'}
           </button>
