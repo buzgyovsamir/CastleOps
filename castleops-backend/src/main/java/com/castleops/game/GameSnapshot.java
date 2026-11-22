@@ -17,6 +17,7 @@ public record GameSnapshot(
         Optional<UUID> blackPlayerId,
         GameSessionStatus status,
         PieceColor currentTurn,
+        boolean inCheck,
         Map<Position, Piece> pieces,
         Optional<GameResult> result,
         Optional<PieceColor> drawOfferBy

@@ -17,6 +17,7 @@ public record GameResponse(
         UUID blackPlayerId,
         GameSessionStatus status,
         PieceColor currentTurn,
+        boolean inCheck,
         List<OccupiedSquare> pieces,
         GameResult result,
         PieceColor drawOfferBy
@@ -45,6 +46,7 @@ public record GameResponse(
                 snapshot.blackPlayerId().orElse(null),
                 snapshot.status(),
                 snapshot.currentTurn(),
+                snapshot.inCheck(),
                 pieces,
                 snapshot.result().orElse(null),
                 snapshot.drawOfferBy().orElse(null)

@@ -40,6 +40,7 @@ export type Game = {
   status: 'WAITING_FOR_OPPONENT' | 'IN_PROGRESS' | 'FINISHED'
   version: number
   currentTurn: PieceColor
+  inCheck: boolean
   pieces: OccupiedSquare[]
   result: GameResult | null
 }
@@ -162,6 +163,14 @@ export default function GameView({
           {game.status === 'IN_PROGRESS' && (
             <p>{isMyTurn ? 'Your turn.' : "Opponent's turn."}</p>
           )}
+
+           {game.status === 'IN_PROGRESS' && game.inCheck && (
+             <p role="status">
+               {isMyTurn
+                 ? 'You are in check.'
+                 : `${game.currentTurn === 'WHITE' ? 'White' : 'Black'} is in check.`}
+             </p>
+           )}
 
           {game.status === 'FINISHED' && (
             <p role="status">

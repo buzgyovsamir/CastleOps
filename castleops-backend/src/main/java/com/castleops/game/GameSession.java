@@ -104,6 +104,7 @@ public final class GameSession {
                 Optional.ofNullable(blackPlayerId),
                 getStatus(),
                 chessGame.getCurrentTurn(),
+                chessGame.isCurrentPlayerInCheck(),
                 pieces,
                 chessGame.getResult(),
                 chessGame.getDrawOfferBy()

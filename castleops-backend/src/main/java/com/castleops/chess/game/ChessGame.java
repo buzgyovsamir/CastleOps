@@ -26,6 +26,7 @@ public class ChessGame {
     private PieceColor drawOfferBy;
     private final InsufficientMaterialDetector insufficientMaterialDetector =
             new InsufficientMaterialDetector();
+    private final CheckDetector checkDetector = new CheckDetector();
 
 
     public ChessGame() {
@@ -368,6 +369,10 @@ public class ChessGame {
 
     public PieceColor getCurrentTurn() {
         return gameState.getCurrentTurn();
+    }
+
+    public boolean isCurrentPlayerInCheck() {
+        return checkDetector.isInCheck(gameState, getCurrentTurn());
     }
 
     public GameStatus getStatus() {
