@@ -13,6 +13,7 @@ export type OccupiedSquare = {
 type ChessBoardProps = {
   pieces: OccupiedSquare[]
   orientation: PieceColor
+  checkedKingColor: PieceColor | null
   selectedSquare: string | null
   disabled: boolean
   onSquareClick: (square: string) => void
@@ -26,6 +27,7 @@ const symbols: Record<PieceColor, Record<PieceType, string>> = {
 export default function ChessBoard({
   pieces,
   orientation,
+  checkedKingColor,
   selectedSquare,
   disabled,
   onSquareClick,
@@ -41,19 +43,22 @@ export default function ChessBoard({
         Array.from(files, (file, column) => {
           const square = `${file}${rank}`
           const piece = piecesBySquare.get(square)
+          const isKingInCheck = piece?.type === 'KING' && piece.color === checkedKingColor
           const lightSquare = (row + column) % 2 === 0
           const description = piece
             ? `${square}: ${piece.color.toLowerCase()} ${piece.type.toLowerCase()}`
             : `${square}: empty`
+          const squareLabel = isKingInCheck ? `${description}, in check` : description
 
           return (
             <button
               key={square}
               type="button"
               className={`chess-square ${lightSquare ? 'light' : 'dark'}`}
-              aria-label={description}
+              aria-label={squareLabel}
+              title={squareLabel}
+              data-in-check={isKingInCheck}
               aria-pressed={selectedSquare === square}
-              title={description}
               disabled={disabled}
               onClick={() => onSquareClick(square)}
             >

@@ -99,6 +99,7 @@ export default function PlayableBoard({
       <ChessBoard
         pieces={game.pieces}
         orientation={playerColor}
+        checkedKingColor={game.status === 'IN_PROGRESS' && game.inCheck ? game.currentTurn : null}
         selectedSquare={selectedSquare}
         disabled={!canMove || isSubmitting}
         onSquareClick={handleSquareClick}
