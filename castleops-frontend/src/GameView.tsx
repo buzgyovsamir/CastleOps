@@ -1,6 +1,37 @@
 import { useEffect, useState } from 'react'
 import JoinGame from './JoinGame'
 import { Client } from '@stomp/stompjs'
+import ChessBoard, { type OccupiedSquare, type PieceColor } from './ChessBoard'
+import PlayableBoard from './PlayableBoard'
+
+const endReasonLabels = {
+  CHECKMATE: 'checkmate',
+  STALEMATE: 'stalemate',
+  INSUFFICIENT_MATERIAL: 'insufficient material',
+  THREEFOLD_REPETITION: 'threefold repetition',
+  FIVEFOLD_REPETITION: 'fivefold repetition',
+  FIFTY_MOVE_RULE: 'the fifty-move rule',
+  SEVENTY_FIVE_MOVE_RULE: 'the seventy-five-move rule',
+  DRAW_AGREEMENT: 'agreement',
+  RESIGNATION: 'resignation',
+  RESIGNATION_WITHOUT_MATING_MATERIAL: 'resignation without mating material',
+} as const
+
+type GameResult = {
+  reason: keyof typeof endReasonLabels
+  winner: PieceColor | null
+}
+
+function formatGameResult(result: GameResult): string {
+  const reason = endReasonLabels[result.reason]
+
+  if (result.winner === null) {
+    return `Draw by ${reason}.`
+  }
+
+  const winner = result.winner === 'WHITE' ? 'White' : 'Black'
+  return `${winner} wins by ${reason}.`
+}
 
 export type Game = {
   gameId: string
@@ -8,7 +39,9 @@ export type Game = {
   blackPlayerId: string | null
   status: 'WAITING_FOR_OPPONENT' | 'IN_PROGRESS' | 'FINISHED'
   version: number
-  currentTurn: 'WHITE' | 'BLACK'
+  currentTurn: PieceColor
+  pieces: OccupiedSquare[]
+  result: GameResult | null
 }
 type GameViewProps = {
   gameId: string
@@ -114,6 +147,15 @@ export default function GameView({
       gameDetails = (
         <>
           <p>Playing as {isWhite ? 'White' : 'Black'}.</p>
+          <PlayableBoard
+            key={game.version}
+            game={game}
+            playerColor={playerColor}
+            getCsrfHeaders={getCsrfHeaders}
+            onGameUpdate={updatedGame =>
+              setState(previous => applyGameUpdate(previous, updatedGame))
+            }
+          />
 
           {game.status === 'WAITING_FOR_OPPONENT' && <p>Waiting for an opponent.</p>}
 
@@ -121,7 +163,11 @@ export default function GameView({
             <p>{isMyTurn ? 'Your turn.' : "Opponent's turn."}</p>
           )}
 
-          {game.status === 'FINISHED' && <p>Game finished.</p>}
+          {game.status === 'FINISHED' && (
+            <p role="status">
+              {game.result ? formatGameResult(game.result) : 'Game finished.'}
+            </p>
+          )}
         </>
       )
     } else if (game.status === 'WAITING_FOR_OPPONENT' && game.blackPlayerId === null) {
