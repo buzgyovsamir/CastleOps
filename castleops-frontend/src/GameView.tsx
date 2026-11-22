@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import JoinGame from './JoinGame'
 import { Client } from '@stomp/stompjs'
-import ChessBoard, { type OccupiedSquare, type PieceColor } from './ChessBoard'
+import type { OccupiedSquare, PieceColor } from './ChessBoard'
 import PlayableBoard from './PlayableBoard'
 
 const endReasonLabels = {
@@ -43,6 +43,7 @@ export type Game = {
   inCheck: boolean
   pieces: OccupiedSquare[]
   result: GameResult | null
+  legalMoves: { from: string; to: string }[]
 }
 type GameViewProps = {
   gameId: string

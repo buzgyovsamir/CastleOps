@@ -72,3 +72,21 @@ button.chess-square {
   background: #e8877b;
   box-shadow: inset 0 0 0 3px #8f251e;
 }
+
+.legal-move-marker,
+.legal-capture-marker {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.legal-move-marker {
+  width: 26%;
+  height: 26%;
+  background: rgb(20 45 32 / 48%);
+}
+
+.legal-capture-marker {
+  inset: 3%;
+  border: 0.65cqi solid rgb(20 45 32 / 60%);
+}

@@ -17,6 +17,7 @@ type ChessBoardProps = {
   selectedSquare: string | null
   disabled: boolean
   onSquareClick: (square: string) => void
+  legalTargets: ReadonlySet<string>
 }
 
 const symbols: Record<PieceColor, Record<PieceType, string>> = {
@@ -31,6 +32,7 @@ export default function ChessBoard({
   selectedSquare,
   disabled,
   onSquareClick,
+  legalTargets,
 }: ChessBoardProps) {
   const whiteAtBottom = orientation === 'WHITE'
   const files = whiteAtBottom ? 'abcdefgh' : 'hgfedcba'
@@ -43,11 +45,14 @@ export default function ChessBoard({
         Array.from(files, (file, column) => {
           const square = `${file}${rank}`
           const piece = piecesBySquare.get(square)
+          const isLegalTarget = legalTargets.has(square)
           const isKingInCheck = piece?.type === 'KING' && piece.color === checkedKingColor
           const lightSquare = (row + column) % 2 === 0
+
           const description = piece
             ? `${square}: ${piece.color.toLowerCase()} ${piece.type.toLowerCase()}`
             : `${square}: empty`
+
           const squareLabel = isKingInCheck ? `${description}, in check` : description
 
           return (
@@ -55,15 +60,23 @@ export default function ChessBoard({
               key={square}
               type="button"
               className={`chess-square ${lightSquare ? 'light' : 'dark'}`}
-              aria-label={squareLabel}
+              aria-label={isLegalTarget ? `${squareLabel}, legal destination` : squareLabel}
               title={squareLabel}
               data-in-check={isKingInCheck}
               aria-pressed={selectedSquare === square}
               disabled={disabled}
               onClick={() => onSquareClick(square)}
             >
+              {isLegalTarget && (
+                <span
+                  aria-hidden="true"
+                  className={piece ? 'legal-capture-marker' : 'legal-move-marker'}
+                />
+              )}
+
               {column === 0 && <span className="rank-label">{rank}</span>}
               {row === 7 && <span className="file-label">{file}</span>}
+
               {piece && (
                 <span className="chess-piece" aria-hidden="true">
                   {symbols[piece.color][piece.type]}{'\uFE0E'}

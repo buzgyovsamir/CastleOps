@@ -27,6 +27,13 @@ export default function PlayableBoard({
   const canPromote =
     selectedPiece?.type === 'PAWN' && selectedPiece.square[1] === rankBeforePromotion
 
+  const legalMoves = game.legalMoves ?? []
+  const legalTargets = new Set(
+      legalMoves
+        .filter(move => move.from === selectedSquare)
+        .map(move => move.to)
+    )
+
   async function handleSquareClick(square: string) {
     if (!canMove || isSubmitting) return
 
@@ -103,6 +110,7 @@ export default function PlayableBoard({
         selectedSquare={selectedSquare}
         disabled={!canMove || isSubmitting}
         onSquareClick={handleSquareClick}
+        legalTargets={legalTargets}
       />
 
       {error && <p role="alert">{error}</p>}

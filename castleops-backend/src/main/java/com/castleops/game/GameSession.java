@@ -7,11 +7,7 @@ import com.castleops.chess.model.Move;
 import com.castleops.chess.model.Piece;
 import com.castleops.chess.model.Position;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public final class GameSession {
 
@@ -97,6 +93,11 @@ public final class GameSession {
             }
         }
 
+        GameSessionStatus status = getStatus();
+        List<Move> legalMoves = status == GameSessionStatus.IN_PROGRESS
+                ? chessGame.getLegalMoves()
+                : List.of();
+
         return new GameSnapshot(
                 id,
                 version,
@@ -105,6 +106,7 @@ public final class GameSession {
                 getStatus(),
                 chessGame.getCurrentTurn(),
                 chessGame.isCurrentPlayerInCheck(),
+                legalMoves,
                 pieces,
                 chessGame.getResult(),
                 chessGame.getDrawOfferBy()
