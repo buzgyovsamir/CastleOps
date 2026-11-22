@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import JoinGame from './JoinGame'
+import { Client } from '@stomp/stompjs'
 
 export type Game = {
   gameId: string
   whitePlayerId: string
   blackPlayerId: string | null
   status: 'WAITING_FOR_OPPONENT' | 'IN_PROGRESS' | 'FINISHED'
+  version: number
+  currentTurn: 'WHITE' | 'BLACK'
 }
 type GameViewProps = {
   gameId: string
@@ -21,6 +24,14 @@ type GameViewState =
   | { status: 'ready'; game: Game }
   | { status: 'error'; message: string }
 
+function applyGameUpdate(previous: GameViewState, game: Game): GameViewState {
+  if (previous.status === 'ready' && previous.game.version >= game.version) {
+    return previous
+  }
+
+  return { status: 'ready', game }
+}
+
 export default function GameView({
   gameId,
   userId,
@@ -32,6 +43,12 @@ export default function GameView({
   useEffect(() => {
     const controller = new AbortController()
 
+    function receiveGame(game: Game) {
+      if (controller.signal.aborted || game.gameId !== gameId) return
+
+      setState(previous => applyGameUpdate(previous, game))
+    }
+
     async function loadGame() {
       try {
         const response = await fetch(`/api/games/${encodeURIComponent(gameId)}`, {
@@ -39,43 +56,74 @@ export default function GameView({
         })
 
         if (!response.ok) {
-          const message = response.status === 404
-            ? 'Game not found.'
-            : 'Unable to load the game.'
-          throw new Error(message)
+          throw new Error(
+            response.status === 404 ? 'Game not found.' : 'Unable to load the game.'
+          )
         }
 
         const game: Game = await response.json()
-
-        if (!controller.signal.aborted) {
-          setState({ status: 'ready', game })
-        }
+        receiveGame(game)
       } catch (error) {
-        if (!controller.signal.aborted) {
-          const message = error instanceof Error ? error.message : 'Unable to load the game.'
-          setState({ status: 'error', message })
-        }
+        if (controller.signal.aborted) return
+
+        const message = error instanceof Error ? error.message : 'Unable to load the game.'
+        setState(previous =>
+          previous.status === 'ready' ? previous : { status: 'error', message }
+        )
       }
     }
 
+    const socketUrl = new URL('/ws', window.location.href)
+    socketUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+
+    const client = new Client({
+      brokerURL: socketUrl.href,
+      reconnectDelay: 3000,
+      onConnect: () => {
+        if (controller.signal.aborted) return
+
+        client.subscribe(`/topic/games/${gameId}`, message => {
+          const game: Game = JSON.parse(message.body)
+          receiveGame(game)
+        })
+
+        void loadGame()
+      },
+    })
+
     void loadGame()
-    return () => controller.abort()
+    client.activate()
+
+    return () => {
+      controller.abort()
+      void client.deactivate()
+    }
   }, [gameId])
 
   let gameDetails
 
   if (state.status === 'ready') {
     const { game } = state
+    const isWhite = userId === game.whitePlayerId
+    const isBlack = userId === game.blackPlayerId
 
-    if (userId === game.whitePlayerId) {
+    if (isWhite || isBlack) {
+      const playerColor = isWhite ? 'WHITE' : 'BLACK'
+      const isMyTurn = game.currentTurn === playerColor
+
       gameDetails = (
         <>
-          <p>Playing as White.</p>
-          {!game.blackPlayerId && <p>Waiting for an opponent.</p>}
+          <p>Playing as {isWhite ? 'White' : 'Black'}.</p>
+
+          {game.status === 'WAITING_FOR_OPPONENT' && <p>Waiting for an opponent.</p>}
+
+          {game.status === 'IN_PROGRESS' && (
+            <p>{isMyTurn ? 'Your turn.' : "Opponent's turn."}</p>
+          )}
+
+          {game.status === 'FINISHED' && <p>Game finished.</p>}
         </>
       )
-    } else if (userId === game.blackPlayerId) {
-      gameDetails = <p>Playing as Black.</p>
     } else if (game.status === 'WAITING_FOR_OPPONENT' && game.blackPlayerId === null) {
       gameDetails = (
         <>
@@ -84,7 +132,7 @@ export default function GameView({
             inviteGameId={game.gameId}
             getCsrfHeaders={getCsrfHeaders}
             onOpenGame={(_gameId, joinedGame) => {
-              setState({ status: 'ready', game: joinedGame })
+              setState(previous => applyGameUpdate(previous, joinedGame))
             }}
           />
         </>
