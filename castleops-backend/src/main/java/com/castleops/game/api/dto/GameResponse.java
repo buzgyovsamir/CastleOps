@@ -17,12 +17,15 @@ public record GameResponse(
         UUID blackPlayerId,
         GameSessionStatus status,
         PieceColor currentTurn,
+        boolean inCheck,
+        List<LegalDestination> legalMoves,
         List<OccupiedSquare> pieces,
         GameResult result,
         PieceColor drawOfferBy
 ) {
 
     public GameResponse {
+        legalMoves = List.copyOf(legalMoves);
         pieces = List.copyOf(pieces);
     }
 
@@ -38,6 +41,15 @@ public record GameResponse(
                 .sorted(Comparator.comparing(OccupiedSquare::square))
                 .toList();
 
+        List<LegalDestination> legalMoves = snapshot.legalMoves()
+                .stream()
+                .map(move -> new LegalDestination(
+                        move.from().toAlgebraic(),
+                        move.to().toAlgebraic()
+                ))
+                .distinct()
+                .toList();
+
         return new GameResponse(
                 snapshot.gameId(),
                 snapshot.version(),
@@ -45,6 +57,8 @@ public record GameResponse(
                 snapshot.blackPlayerId().orElse(null),
                 snapshot.status(),
                 snapshot.currentTurn(),
+                snapshot.inCheck(),
+                legalMoves,
                 pieces,
                 snapshot.result().orElse(null),
                 snapshot.drawOfferBy().orElse(null)
@@ -55,6 +69,12 @@ public record GameResponse(
             String square,
             PieceType type,
             PieceColor color
+    ) {
+    }
+
+    public record LegalDestination(
+            String from,
+            String to
     ) {
     }
 }

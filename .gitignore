@@ -16,3 +16,10 @@ target/
 Thumbs.db
 
 compose.yaml
+
+myfile.md
+
+# React / Vite
+node_modules/
+dist/
+*.tsbuildinfo
