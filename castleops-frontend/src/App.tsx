@@ -55,13 +55,42 @@ async function login(username: string, password: string): Promise<void> {
   }
 }
 
+async function registerAccount(
+  username: string,
+  password: string,
+): Promise<CurrentUser> {
+  const headers = await getCsrfHeaders()
+
+  const response = await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password }),
+  })
+
+  if (response.status === 201) {
+    return response.json()
+  }
+
+  if (response.status === 400 || response.status === 409) {
+    const problem = await response.json()
+    throw new Error(problem.detail ?? 'Please check your registration details.')
+  }
+
+  throw new Error('Unable to create your account. Please try again.')
+}
+
 export default function App() {
   const [session, setSession] = useState<SessionState>({ status: 'loading' })
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [loginError, setLoginError] = useState('')
+  const [formError, setFormError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [logoutError, setLogoutError] = useState('')
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [accountNotice, setAccountNotice] = useState('')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -84,14 +113,31 @@ export default function App() {
     return () => controller.abort()
   }, [])
 
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+  function switchForm() {
+    setIsRegistering(!isRegistering)
+    setPassword('')
+    setFormError('')
+    setAccountNotice('')
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (isSubmitting) return
 
-    setLoginError('')
     setIsSubmitting(true)
+    setFormError('')
+    setAccountNotice('')
 
     try {
+      if (isRegistering) {
+        const account = await registerAccount(username, password)
+        setUsername(account.username)
+        setPassword('')
+        setIsRegistering(false)
+        setAccountNotice('Account created. Sign in with your password.')
+        return
+      }
+
       await login(username, password)
       setPassword('')
 
@@ -99,15 +145,15 @@ export default function App() {
       setSession(currentSession)
 
       if (currentSession.status === 'guest') {
-        setLoginError('Your session is inactive. Please sign in again.')
+        setFormError('Your session is inactive. Please sign in again.')
       }
     } catch (error) {
       if (error instanceof TypeError) {
-        setLoginError('Unable to connect to CastleOps.')
+        setFormError('Unable to connect to CastleOps.')
       } else if (error instanceof Error) {
-        setLoginError(error.message)
+        setFormError(error.message)
       } else {
-        setLoginError('Unable to sign in. Please try again.')
+        setFormError('Something went wrong. Please try again.')
       }
     } finally {
       setIsSubmitting(false)
@@ -133,7 +179,7 @@ async function handleLogout() {
 
     setUsername('')
     setPassword('')
-    setLoginError('')
+    setFormError('')
     setSession({ status: 'guest' })
   } catch {
     setLogoutError('Unable to sign out. Please try again.')
@@ -150,40 +196,64 @@ async function handleLogout() {
 
       {session.status === 'guest' && (
         <>
-          <p>Browsing as a guest.</p>
+          <h2>{isRegistering ? 'Create account' : 'Sign in'}</h2>
 
-          <form onSubmit={handleLogin}>
-            <div>
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                name="username"
-                autoComplete="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                required
-              />
-            </div>
+          {accountNotice && <p role="status">{accountNotice}</p>}
 
-            <div>
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit}>
+            <fieldset disabled={isSubmitting}>
+              <legend>Account details</legend>
 
-            {loginError && <p role="alert">{loginError}</p>}
+              <div>
+                <label htmlFor="username">Username</label>
+                <input
+                  id="username"
+                  name="username"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  aria-describedby={isRegistering ? 'username-help' : undefined}
+                  required
+                />
+                {isRegistering && (
+                  <p id="username-help">
+                    Use 3–32 letters, digits, or underscores.
+                  </p>
+                )}
+              </div>
 
-            <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Signing in…' : 'Sign in'}
-            </button>
+              <div>
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  aria-describedby={isRegistering ? 'password-help' : undefined}
+                  required
+                />
+                {isRegistering && (
+                  <p id="password-help">
+                    Use at least 12 characters and at most 72 UTF-8 bytes.
+                  </p>
+                )}
+              </div>
+
+              {formError && <p role="alert">{formError}</p>}
+
+              <button type="submit">
+                {isRegistering
+                  ? (isSubmitting ? 'Creating account…' : 'Create account')
+                  : (isSubmitting ? 'Signing in…' : 'Sign in')}
+              </button>
+            </fieldset>
           </form>
+
+          <button type="button" onClick={switchForm} disabled={isSubmitting}>
+            {isRegistering ? 'Back to sign in' : 'Create an account'}
+          </button>
         </>
       )}
 
