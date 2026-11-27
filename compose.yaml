@@ -15,5 +15,26 @@ services:
       timeout: 3s
       retries: 10
 
+  backend:
+    build:
+      context: ./castleops-backend
+    environment:
+      CASTLEOPS_DB_URL: jdbc:postgresql://postgres:5432/castleops
+      CASTLEOPS_DB_USERNAME: castleops
+      CASTLEOPS_DB_PASSWORD: ${CASTLEOPS_DB_PASSWORD:?Set CASTLEOPS_DB_PASSWORD in .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  frontend:
+    build:
+      context: ./castleops-frontend
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:8081:80"
+
 volumes:
   postgres-data:
