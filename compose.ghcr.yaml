@@ -1,0 +1,6 @@
+services:
+  backend:
+    image: "ghcr.io/buzgyovsamir/castleops-backend:sha-0ada4851a514befe15495c35e4947f37e9ec520a"
+
+  frontend:
+    image: "ghcr.io/buzgyovsamir/castleops-frontend:sha-0ada4851a514befe15495c35e4947f37e9ec520a"
